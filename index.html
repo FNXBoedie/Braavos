@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Braavos</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>Menu</h2>
+        </div>
+        <ul class="menu">
+            <li>
+                <a href="#dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="#goals">
+                    <i class="fas fa-bullseye"></i>
+                    Goals
+                </a>
+            </li>
+            <li>
+                <a href="#funds">
+                    <i class="fas fa-money-bill"></i>
+                    Funds
+                </a>
+            </li>
+            <li>
+                <a href="#assets">
+                    <i class="fas fa-home"></i>
+                    Assets
+                </a>
+            </li>
+            <li>
+                <a href="#budget">
+                    <i class="fas fa-piggy-bank"></i>
+                    Budget
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div class="main-content">
+        <div class="container">
+            <header>
+                <h1>Braavos</h1>
+            </header>
+            <div id="dashboard" class="submenu-content">
+                <section class="dashboard">
+                    <div class="overview">
+                        <div class="card income-card">
+                            <h3>Total Income</h3>
+                            <p id="total-income">$0.00</p>
+                        </div>
+                        <div class="card expense-card">
+                            <h3>Total Expenses</h3>
+                            <p id="total-expenses">$0.00</p>
+                        </div>
+                        <div class="card balance-card">
+                            <h3>Balance</h3>
+                            <p id="balance">$0.00</p>
+                        </div>
+                        <div class="card funds-card">
+                            <h3>Funds</h3>
+                            <p id="total-funds">€0.00</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="spendingChart"></canvas>
+                    </div>
+                </section>
+
+                <section class="transactions">
+                    <h2>Transactions</h2>
+                    <div class="transaction-filters">
+                        <label for="filter-type">Filter by Type:</label>
+                        <select id="filter-type">
+                            <option value="all">All</option>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                        <label for="filter-category">Filter by Category:</label>
+                        <select id="filter-category">
+                            <option value="all">All</option>
+                        </select>
+                        <label for="sort-by">Sort By:</label>
+                        <select id="sort-by">
+                            <option value="date-newest">Date (Newest)</option>
+                            <option value="date-oldest">Date (Oldest)</option>
+                            <option value="amount-high">Amount (High to Low)</option>
+                            <option value="amount-low">Amount (Low to High)</option>
+                        </select>
+                    </div>
+                    <table class="transaction-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Description</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transaction-list">
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="input-forms">
+                    <div class="input-form">
+                        <h2>Add Income</h2>
+                        <form id="add-income-form">
+                            <label for="income-date">Date:</label>
+                            <input type="date" id="income-date" required>
+                            <label for="income-category">Category:</label>
+                            <select id="income-category" required>
+                                <option value="salary">Salary</option>
+                                <option value="freelance">Freelance</option>
+                                <option value="investment">Investment</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <label for="income-amount">Amount:</label>
+                            <input type="number" id="income-amount" step="0.01" required>
+                            <label for="income-description">Description:</label>
+                            <textarea id="income-description"></textarea>
+                            <label for="income-recurring">Recurring:</label>
+                            <select id="income-recurring">
+                                <option value="none">None</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                            <button type="submit" class="btn">Add Income</button>
+                        </form>
+                    </div>
+
+                    <div class="input-form">
+                        <h2>Add Expense</h2>
+                        <form id="add-expense-form">
+                            <label for="expense-date">Date:</label>
+                            <input type="date" id="expense-date" required>
+                            <label for="expense-category">Category:</label>
+                            <select id="expense-category" required>
+                                <option value="food">Food</option>
+                                <option value="rent">Rent</option>
+                                <option value="utilities">Utilities</option>
+                                <option value="transportation">Transportation</option>
+                                <option value="entertainment">Entertainment</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <label for="expense-amount">Amount:</label>
+                            <input type="number" id="expense-amount" step="0.01" required>
+                            <label for="expense-description">Description:</label>
+                            <textarea id="expense-description"></textarea>
+                            <label for="expense-recurring">Recurring:</label>
+                            <select id="expense-recurring">
+                                <option value="none">None</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                            <button type="submit" class="btn">Add Expense</button>
+                        </form>
+                    </div>
+                </section>
+            </div>
+            <div id="funds" class="submenu-content" style="display: none;">
+                <h2>Funds</h2>
+                <table id="funds-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+                <div class="funds-summary">
+                    <h3>Total Funds</h3>
+                    <p id="funds-total-display">$0.00</p>
+                </div>
+                <div class="funds-forms">
+                    <div class="asset-category">
+                        <h3>Add Cash</h3>
+                        <div class="asset-list"></div>
+                        <form id="add-cash-form">
+                            <label for="cash-name">Name:</label>
+                            <input type="text" id="cash-name" required>
+                            <label for="cash-amount">Amount:</label>
+                            <input type="number" id="cash-amount" step="0.01" required>
+                            <button type="submit" class="btn">Add Cash</button>
+                        </form>
+                    </div>
+                    <div class="asset-category">
+                        <h3>Add Checking</h3>
+                        <div class="asset-list"></div>
+                        <form id="add-checking-form">
+                            <label for="checking-name">Name:</label>
+                            <input type="text" id="checking-name" required>
+                            <label for="checking-amount">Amount:</label>
+                            <input type="number" id="checking-amount" step="0.01" required>
+                            <button type="submit" class="btn">Add Checking</button>
+                        </form>
+                    </div>
+                    <div class="asset-category">
+                        <h3>Add Savings</h3>
+                        <div class="asset-list"></div>
+                        <form id="add-savings-form">
+                            <label for="savings-name">Name:</label>
+                            <input type="text" id="savings-name" required>
+                            <label for="savings-amount">Amount:</label>
+                            <input type="number" id="savings-amount" step="0.01" required>
+                            <button type="submit" class="btn">Add Savings</button>
+                        </form>
+                    </div>
+                    <div class="asset-category">
+                        <h3>Add Investments</h3>
+                         <div class="asset-list"></div>
+                        <form id="add-investments-form">
+                            <label for="investment-name">Name:</label>
+                            <input type="text" id="investment-name" required>
+                            <label for="investment-amount">Amount:</label>
+                            <input type="number" id="investment-amount" step="0.01" required>
+                            <button type="submit" class="btn">Add Investments</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div id="goals" class="submenu-content" style="display: none;">
+                <h2>Manage Goals</h2>
+                <form id="add-goal-form">
+                    <div class="goal-input">
+                        <label for="goal-name">Goal Name:</label>
+                        <input type="text" id="goal-name" required>
+                    </div>
+                    <div class="goal-input">
+                        <label for="goal-amount">Target Amount:</label>
+                        <input type="number" id="goal-amount" step="0.01" required>
+                    </div>
+                    <div class="goal-input">
+                        <label for="goal-due-date">Due Date (Optional):</label>
+                        <input type="date" id="goal-due-date">
+                    </div>
+                    <button type="submit" class="btn">Add Goal</button>
+                </form>
+                <div id="goals-list">
+                    <!-- Goals will be listed here -->
+                </div>
+            </div>
+            <div id="assets" class="submenu-content" style="display: none;">
+                <h2>Assets</h2>
+                <div class="asset-category">
+                    <h3>Real Estate</h3>
+                    <div class="asset-list" id="real-estate-list">
+                        <!-- Real estate assets will be listed here -->
+                    </div>
+                    <form id="add-real-estate-form">
+                        <label for="real-estate-name">Asset Name:</label>
+                        <input type="text" id="real-estate-name" required>
+                        <label for="real-estate-amount">Amount:</label>
+                        <input type="number" id="real-estate-amount" step="0.01" required>
+                        <button type="submit" class="btn">Add Asset</button>
+                    </form>
+                </div>
+                <div class="asset-category">
+                    <h3>Vehicles</h3>
+                    <div class="asset-list" id="vehicle-list">
+                        <!-- Vehicle assets will be listed here -->
+                    </div>
+                    <form id="add-vehicle-form">
+                        <label for="vehicle-name">Asset Name:</label>
+                        <input type="text" id="vehicle-name" required>
+                        <label for="vehicle-amount">Amount:</label>
+                        <input type="number" id="vehicle-amount" step="0.01" required>
+                        <button type="submit" class="btn">Add Asset</button>
+                    </form>
+                </div>
+                 <div class="asset-category">
+                    <h3>Luxuries</h3>
+                    <div class="asset-list" id="luxury-list">
+                        <!-- Luxury assets will be listed here -->
+                    </div>
+                    <form id="add-luxury-form">
+                        <label for="luxury-name">Asset Name:</label>
+                        <input type="text" id="luxury-name" required>
+                        <label for="luxury-amount">Amount:</label>
+                        <input type="number" id="luxury-amount" step="0.01" required>
+                        <button type="submit" class="btn">Add Asset</button>
+                    </form>
+                </div>
+                <div class="asset-category">
+                    <h3>Other</h3>
+                    <div class="asset-list" id="other-list">
+                        <!-- Other assets will be listed here -->
+                    </div>
+                    <form id="add-other-form">
+                        <label for="other-name">Asset Name:</label>
+                        <input type="text" id="other-name" required>
+                        <label for="other-amount">Amount:</label>
+                        <input type="number" id="other-amount" step="0.01" required>
+                        <button type="submit" class="btn">Add Asset</button>
+                    </form>
+                </div>
+            </div>
+            <div id="budget" class="submenu-content" style="display: none;">
+                <h2>Budget</h2>
+                <div class="budget-category">
+                    <h3>Food</h3>
+                    <label for="food-budget">Monthly Budget:</label>
+                    <input type="number" id="food-budget" step="0.01">
+                    <button class="btn add-budget-btn" data-category="food">Add Budget</button>                
+                    <br><br>
+                    <div class="progress-bar">
+                        <div class="progress" id="food-progress"></div>
+                    </div>
+                </div>
+                 <div class="budget-category">
+                    <h3>Rent</h3>
+                    <label for="rent-budget">Monthly Budget:</label>
+                    <input type="number" id="rent-budget" step="0.01">
+                    <button class="btn add-budget-btn" data-category="rent">Add Budget</button>
+                    <br><br>
+                     <div class="progress-bar">
+                        <div class="progress" id="rent-progress"></div>
+                    </div>
+                </div>
+                 <div class="budget-category">
+                    <h3>Utilities</h3>
+                    <label for="utilities-budget">Monthly Budget:</label>
+                    <input type="number" id="utilities-budget" step="0.01">
+                    <button class="btn add-budget-btn" data-category="utilities">Add Budget</button>
+                     <div class="progress-bar">
+                        <div class="progress" id="utilities-progress"></div>
+                    </div>
+                </div>
+                 <div class="budget-category">
+                    <h3>Transportation</h3>
+                    <label for="transportation-budget">Monthly Budget:</label>
+                    <input type="number" id="transportation-budget" step="0.01">
+                    <button class="btn add-budget-btn" data-category="transportation">Add Budget</button>
+                    <br><br>
+                     <div class="progress-bar">
+                        <div class="progress" id="transportation-progress"></div>
+                    </div>
+                </div>
+                 <div class="budget-category">
+                    <h3>Entertainment</h3>
+                    <label for="entertainment-budget">Monthly Budget:</label>
+                    <input type="number" id="entertainment-budget" step="0.01">
+                    <button class="btn add-budget-btn" data-category="entertainment">Add Budget</button>
+                    <br><br>
+                     <div class="progress-bar">
+                        <div class="progress" id="entertainment-progress"></div>
+                    </div>
+                </div>
+                 <div class="budget-category">
+                    <h3>Other</h3>
+                    <label for="other-budget">Monthly Budget:</label>
+                    <input type="number" id="other-budget" step="0.01">
+                    <button class="btn add-budget-btn" data-category="other">Add Budget</button>
+                    <br><br>
+                     <div class="progress-bar">
+                        <div class="progress" id="other-progress"></div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
