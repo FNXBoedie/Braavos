@@ -1,386 +1,2851 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Braavos</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
+    <title>Braavos - Modern Finance Tracker</title>
 
+    <!-- Google Font: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"
+        integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script> <!-- Updated Chart.js version -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.1.0"></script> <!-- Optional: For labels inside chart -->
+
+
+    <!-- Embedded CSS -->
+    <style>
+        /* --- CSS Variables (Theme) --- */
+        :root {
+            --font-primary: 'Inter', sans-serif;
+
+            /* Refined Dark Theme */
+            --bg-primary: #1a1d21; /* Very dark grey/blue */
+            --bg-secondary: #252a31; /* Slightly lighter background */
+            --bg-card: #2c323a; /* Card background */
+            --bg-input: #3a414b; /* Input background */
+            --border-color: #404854;
+            --border-color-light: #555e6b;
+            --text-primary: #e0e6f1; /* Light grey/blueish text */
+            --text-secondary: #a0a7b4; /* Muted text */
+            --text-heading: #ffffff;
+            --accent-primary: #3498db; /* Primary accent (Blue) */
+            --accent-secondary: #2ecc71; /* Success/Income (Green) */
+            --accent-danger: #e74c3c; /* Error/Expense (Red) */
+            --accent-warning: #f39c12; /* Warning/Balance (Orange) */
+            --accent-info: #9b59b6;  /* Info/Funds (Purple) */
+            --shadow-color: rgba(0, 0, 0, 0.2);
+
+             /* Chart Colors */
+            --chart-color-1: #3498db;
+            --chart-color-2: #e74c3c;
+            --chart-color-3: #f1c40f;
+            --chart-color-4: #2ecc71;
+            --chart-color-5: #9b59b6;
+            --chart-color-6: #1abc9c;
+            --chart-color-7: #e67e22;
+            --chart-color-8: #34495e;
+
+            --sidebar-width: 260px;
+            --sidebar-width-collapsed: 80px;
+            --header-height: 60px; /* If we had a fixed header */
+        }
+
+        /* --- Base Styles --- */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-size: 16px; /* Base font size */
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            display: flex;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            border-right: 1px solid var(--border-color);
+            transition: width 0.3s ease;
+            z-index: 1000;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        .sidebar-header {
+            padding: 1.5rem 1rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-heading);
+             opacity: 1;
+             transition: opacity 0.2s ease 0.1s; /* Fade in/out text */
+        }
+        .sidebar-header h2 i {
+            margin-right: 0.5rem;
+            color: var(--accent-primary);
+        }
+
+
+        .menu {
+            list-style: none;
+            padding: 1rem 0;
+            margin: 0;
+            overflow-y: auto; /* Allow scrolling if menu long */
+            flex-grow: 1; /* Take remaining space */
+        }
+
+        .menu li a {
+            display: flex;
+            align-items: center;
+            padding: 0.9rem 1.5rem;
+            text-decoration: none;
+            color: var(--text-secondary);
+            transition: background-color 0.2s ease, color 0.2s ease;
+            border-left: 3px solid transparent; /* For active indicator */
+            white-space: nowrap; /* Prevent text wrapping */
+        }
+
+        .menu li a:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .menu li.active a { /* Style for the active menu item */
+             background-color: rgba(52, 152, 219, 0.1); /* Light accent bg */
+             color: var(--accent-primary);
+             border-left-color: var(--accent-primary);
+             font-weight: 500;
+        }
+
+
+        .menu li a i {
+            font-size: 1.2rem;
+            margin-right: 1rem;
+            width: 24px; /* Fixed width for icon alignment */
+            text-align: center;
+             flex-shrink: 0;
+             transition: margin-right 0.3s ease;
+        }
+         .menu li a span {
+             opacity: 1;
+             transition: opacity 0.2s ease 0.1s; /* Fade in/out text */
+         }
+
+        /* --- Main Content --- */
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            margin-left: var(--sidebar-width);
+            transition: margin-left 0.3s ease;
+            overflow-y: auto; /* Allow content scrolling */
+             background-color: var(--bg-primary); /* Ensure background consistency */
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px; /* Wider max-width for pro look */
+            margin: 0 auto; /* Center container */
+        }
+
+        header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-heading);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-heading);
+            font-weight: 500;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+         h3 {
+             font-size: 1.2rem;
+             margin-bottom: 1rem;
+             color: var(--text-heading);
+             font-weight: 500;
+         }
+
+        /* --- Dashboard --- */
+        .overview {
+            display: grid;
+             /* Responsive grid: 1 col on small, 2 on medium, 3/4/5 on large */
+             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px var(--shadow-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+         .card:hover {
+             transform: translateY(-3px);
+             box-shadow: 0 6px 16px var(--shadow-color);
+         }
+
+        .card h3 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card p {
+            font-size: 1.75rem;
+            margin: 0;
+            color: var(--text-heading);
+            font-weight: 600;
+        }
+        /* Specific Card Accent Borders */
+         .net-worth-card { border-top: 4px solid var(--accent-primary); }
+        .income-card { border-top: 4px solid var(--accent-secondary); }
+        .expense-card { border-top: 4px solid var(--accent-danger); }
+        .balance-card { border-top: 4px solid var(--accent-warning); }
+        .funds-card { border-top: 4px solid var(--accent-info); }
+
+         /* Style the Net Worth card value */
+         .net-worth-card p { color: var(--accent-primary); }
+         .income-card p { color: var(--accent-secondary); }
+         .expense-card p { color: var(--accent-danger); }
+         .balance-card p { color: var(--accent-warning); }
+         .funds-card p { color: var(--accent-info); }
+
+
+        .chart-container {
+            background-color: var(--bg-card);
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px var(--shadow-color);
+            margin-bottom: 2.5rem; /* Increased margin to make space for buttons */
+            position: relative; /* For potential overlays or absolute positioned elements */
+            height: 400px; /* Give chart enough height */
+            width: 100%; /* Ensure it takes full width of its container */
+        }
+        #spendingChart {
+            max-height: 360px; /* Ensure chart respects container padding */
+        }
+
+        /* --- Add Transaction Buttons (New) --- */
+        .add-transaction-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem; /* Increased gap */
+            margin-bottom: 2.5rem; /* Space before transaction list */
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+        .add-transaction-buttons .btn {
+            width: auto; /* Override default form button width */
+            min-width: 160px; /* Ensure buttons have some minimum width */
+            padding: 0.8rem 2rem; /* More padding */
+        }
+        .btn-income-trigger { background-color: var(--accent-secondary) !important; }
+        .btn-income-trigger:hover { background-color: #27ae60 !important; } /* Darker green */
+        .btn-expense-trigger { background-color: var(--accent-danger) !important; }
+        .btn-expense-trigger:hover { background-color: #c0392b !important; } /* Darker red */
+
+
+        /* --- Transactions --- */
+        .transactions { margin-bottom: 2.5rem; }
+
+        .transaction-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .transaction-filters > div { /* Wrap label/select pairs */
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-grow: 1; /* Allow filters to take space */
+            min-width: 150px; /* Adjusted min-width */
+        }
+        .transaction-filters label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+             flex-shrink: 0; /* Prevent label from shrinking */
+             white-space: nowrap; /* Prevent label wrapping */
+        }
+        .transaction-filters select {
+            width: 100%; /* Make select fill the wrapper */
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-color-light);
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            cursor: pointer;
+            appearance: none; /* Remove default arrow */
+             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23a0a7b4'%3E%3Cpath fill-rule='evenodd' d='M8 11.5a.5.5 0 0 1-.354-.146l-4-4a.5.5 0 0 1 .708-.708L8 10.293l3.646-3.647a.5.5 0 0 1 .708.708l-4 4A.5.5 0 0 1 8 11.5z'/%3E%3C/svg%3E");
+             background-repeat: no-repeat;
+             background-position: right 0.7rem center;
+             background-size: 1em 1em;
+             padding-right: 2.5rem; /* Space for arrow */
+        }
+         .transaction-filters select:focus {
+             outline: none;
+             border-color: var(--accent-primary);
+             box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
+         }
+
+        .data-table-wrapper { /* Add wrapper for potential horizontal scroll on small screens */
+            overflow-x: auto;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap; /* Prevent text wrapping */
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.9rem 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+             vertical-align: middle;
+        }
+
+        .data-table th {
+            background-color: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.03); /* Subtle hover */
+        }
+
+        .data-table td { color: var(--text-primary); font-size: 0.95rem; }
+         .data-table td .currency-positive { color: var(--accent-secondary); }
+         .data-table td .currency-negative { color: var(--accent-danger); }
+         .data-table td .description-muted { color: var(--text-secondary); font-size: 0.85rem;}
+
+
+        .delete-button, .action-button { /* General style for icon buttons */
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 5px;
+            transition: color 0.2s ease;
+        }
+         .delete-button:hover { color: var(--accent-danger); }
+         .action-button:hover { color: var(--accent-primary); }
+         .delete-button i, .action-button i { display: block; } /* Ensure icon takes space */
+
+
+        /* --- Input Forms (General inside cards/modals) --- */
+         .form-section-grid { /* Used in other sections */
+             display: grid;
+             grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); /* Responsive columns */
+             gap: 1.5rem;
+             margin-bottom: 2rem;
+         }
+
+        .input-form, .form-card { /* Unified form container style */
+            background-color: var(--bg-card); /* Used for other section forms too */
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+
+        /* Style specific to the forms now in modals */
+        .modal-content .input-form {
+            background-color: transparent; /* Modal provides background */
+            padding: 0; /* Modal provides padding */
+            border: none;
+            box-shadow: none;
+        }
+        .modal-content .input-form h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            font-size: 1.4rem; /* Slightly larger in modal */
+            color: var(--text-heading);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.8rem;
+             display: flex;
+             align-items: center;
+             gap: 0.5rem;
+        }
+         .modal-content .input-form h2 i {
+             color: var(--accent-primary); /* Use primary accent, color adjusted on element */
+             font-size: 1.1em;
+         }
+
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .form-group input[type="date"],
+        .form-group input[type="number"],
+        .form-group input[type="text"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color-light);
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+         /* Style number input to remove arrows (optional) */
+        .form-group input[type=number]::-webkit-inner-spin-button,
+        .form-group input[type=number]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        .form-group input[type=number] {
+          -moz-appearance: textfield; /* Firefox */
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-group select {
+             appearance: none; /* Remove default arrow */
+             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23a0a7b4'%3E%3Cpath fill-rule='evenodd' d='M8 11.5a.5.5 0 0 1-.354-.146l-4-4a.5.5 0 0 1 .708-.708L8 10.293l3.646-3.647a.5.5 0 0 1 .708.708l-4 4A.5.5 0 0 1 8 11.5z'/%3E%3C/svg%3E");
+             background-repeat: no-repeat;
+             background-position: right 1rem center;
+             background-size: 1em 1em;
+             padding-right: 2.5rem; /* Make space for custom arrow */
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+        }
+         /* Placeholder styling */
+        .form-group ::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        /* --- Buttons --- */
+        .btn {
+            background-color: var(--accent-primary);
+            color: #ffffff;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 500;
+            display: inline-flex; /* Align icon and text */
+            align-items: center;
+            gap: 0.5rem;
+            /* width: 100%; <-- Removed default full width */
+             justify-content: center; /* Center content */
+             margin-top: 0.5rem; /* Space above button in forms */
+        }
+         .btn i { font-size: 1.1em; } /* Slightly larger icon */
+
+        .btn:hover {
+            background-color: #2980b9; /* Darker blue */
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+        }
+         .btn:active {
+             transform: translateY(1px);
+         }
+         /* Full width button specifically for forms inside modals/cards */
+        .input-form .form-actions .btn, /* Target buttons inside form-actions */
+        .form-card .btn {
+             flex-grow: 1; /* Allow buttons to grow in flex context */
+             width: auto; /* Let flexbox handle width */
+        }
+
+
+         .btn-secondary {
+             background-color: var(--bg-input);
+             color: var(--text-primary);
+             border: 1px solid var(--border-color-light);
+         }
+         .btn-secondary:hover {
+             background-color: var(--border-color);
+             box-shadow: none;
+         }
+
+         .btn-danger {
+             background-color: var(--accent-danger);
+         }
+         .btn-danger:hover {
+             background-color: #c0392b; /* Darker red */
+              box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+         }
+
+        /* Form Actions container for buttons in modals */
+         .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem; /* Space above buttons */
+            flex-wrap: wrap; /* Wrap buttons on smaller screens */
+         }
+         /* Ensure buttons take up space evenly or wrap nicely */
+         .form-actions .btn {
+             flex-basis: calc(50% - 0.5rem); /* Roughly half width minus gap */
+         }
+
+
+        /* --- Modal Styles (New) --- */
+        .modal-overlay {
+            position: fixed;
+            inset: 0; /* Replaces top, left, width, height */
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+            padding: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.visible {
+             display: flex;
+             opacity: 1;
+        }
+
+        .modal-content {
+            background-color: var(--bg-card);
+            padding: 2rem 2.5rem; /* More horizontal padding */
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+            position: relative;
+            max-width: 550px; /* Slightly wider modal */
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+             /* Custom scrollbar for modal content */
+             scrollbar-width: thin;
+             scrollbar-color: var(--border-color-light) var(--bg-card);
+        }
+          .modal-content::-webkit-scrollbar { width: 6px; }
+          .modal-content::-webkit-scrollbar-track { background: var(--bg-card); }
+          .modal-content::-webkit-scrollbar-thumb { background-color: var(--border-color-light); border-radius: 3px;}
+
+        .modal-close-btn {
+            position: absolute;
+            top: 12px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            font-weight: 300; /* Lighter X */
+            color: var(--text-secondary);
+            cursor: pointer;
+            line-height: 1;
+            padding: 5px;
+            transition: color 0.2s ease;
+        }
+        .modal-close-btn:hover {
+            color: var(--text-primary);
+        }
+
+        /* --- Funds / Assets / Budget / Goals Specific Styles --- */
+        /* Styles remain largely the same */
+
+         /* Grids for multi-column layouts */
+         .funds-forms, .assets-container, #goals-list, .budget-categories {
+            display: grid;
+             /* Responsive grid, ensures min width */
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+         }
+
+         /* Funds/Assets Lists within Cards */
+         .item-list {
+             list-style: none;
+             padding: 0;
+             margin: 1.5rem 0;
+             max-height: 200px; /* Limit height and make scrollable */
+             overflow-y: auto;
+              /* Custom scrollbar (optional) */
+             scrollbar-width: thin;
+             scrollbar-color: var(--border-color-light) var(--bg-card);
+         }
+          .item-list::-webkit-scrollbar { width: 6px; }
+          .item-list::-webkit-scrollbar-track { background: var(--bg-card); }
+          .item-list::-webkit-scrollbar-thumb { background-color: var(--border-color-light); border-radius: 3px;}
+
+
+         .item-list li {
+             background-color: var(--bg-secondary);
+             padding: 0.8rem 1rem;
+             margin-bottom: 0.5rem;
+             border-radius: 6px;
+             color: var(--text-primary);
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+             font-size: 0.95rem;
+             border: 1px solid var(--border-color);
+         }
+         .item-list li span:first-child { /* Name */
+            font-weight: 500;
+             margin-right: 1rem;
+             overflow: hidden;
+             text-overflow: ellipsis;
+             white-space: nowrap;
+         }
+         .item-list li span:nth-child(2) { /* Amount */
+             font-weight: 600;
+             color: var(--text-heading);
+             white-space: nowrap;
+              margin-left: auto; /* Push amount to the right before button */
+             padding-right: 0.5rem;
+         }
+         /* Added styling for positive amounts (can be applied universally or selectively) */
+         .item-list li span.currency-positive {
+             color: var(--accent-secondary);
+         }
+         .item-list .delete-item { /* General delete button for lists */
+             color: var(--text-secondary);
+             font-size: 1rem;
+             padding: 0 4px;
+             flex-shrink: 0; /* Prevent button shrinking */
+         }
+         .item-list .delete-item:hover { color: var(--accent-danger); }
+
+         .item-list-empty {
+            color: var(--text-secondary);
+            font-style: italic;
+            text-align: center;
+            padding: 1rem;
+         }
+
+         /* Funds Summary & Asset Summary */
+         .funds-summary, .assets-summary { /* Shared style */
+            background-color: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            text-align: center;
+             border: 1px solid var(--border-color);
+             box-shadow: 0 4px 12px var(--shadow-color); /* Add shadow for consistency */
+         }
+         .funds-summary h3, .assets-summary h3 {
+             margin: 0 0 0.5rem 0;
+             color: var(--text-secondary);
+             font-size: 1rem;
+             text-transform: uppercase;
+             font-weight: 500;
+             letter-spacing: 0.5px;
+         }
+         .funds-summary p, .assets-summary p {
+             font-size: 2rem;
+             font-weight: 600;
+             margin: 0;
+         }
+         /* Specific colors */
+         .funds-summary p { color: var(--accent-info); }
+         .assets-summary p { color: var(--accent-warning); } /* Using warning color for assets */
+
+
+        /* Goals Styling */
+         #add-goal-form {
+             background-color: var(--bg-card);
+             padding: 2rem;
+             border-radius: 8px;
+             margin-bottom: 2rem;
+             display: grid;
+             /* Grid setup for layout */
+             grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+             gap: 1rem 1.5rem;
+             align-items: end; /* Align items to the bottom of their cell */
+             border: 1px solid var(--border-color);
+             box-shadow: 0 4px 12px var(--shadow-color);
+             /* NEW: Center the form groups (content within) if needed - or adjust grid template */
+             /* justify-items: center; /* Centers content horizontally within grid cells */
+         }
+          /* Style form groups within the goal form specifically if needed */
+         #add-goal-form .form-group {
+             /* Optional: Add max-width if inputs look too wide on large screens */
+             /* max-width: 350px; */
+             /* justify-self: center; /* Centers the form group element itself within its grid column */
+         }
+
+          #add-goal-form button[type="submit"] {
+             grid-column: 1 / -1; /* Span across all columns */
+             width: auto; /* Allow button to size naturally */
+             padding: 0.8rem 2rem;
+             justify-self: center; /* Center the button */
+             /* Removed max-width to allow natural centering */
+         }
+
+
+         .goal-item {
+            background-color: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 8px;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px var(--shadow-color);
+             transition: transform 0.2s ease, box-shadow 0.2s ease;
+         }
+          .goal-item:hover {
+             transform: translateY(-3px);
+             box-shadow: 0 6px 16px var(--shadow-color);
+         }
+
+         .goal-item .goal-info p { margin: 0.25rem 0; font-size: 0.95rem; }
+         .goal-item .goal-info strong { font-size: 1.2em; color: var(--text-heading); font-weight: 600;}
+         .goal-item .monthly-savings { font-size: 0.9em; color: var(--text-secondary); }
+         .goal-item .progress-bar-container { margin: 1rem 0 0.5rem 0; }
+         .goal-item .progress-label { font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.3rem;}
+         .goal-item .progress-bar {
+            width: 100%;
+            height: 10px; /* Slimmer progress bar */
+            background-color: var(--bg-input);
+            border-radius: 5px;
+            overflow: hidden;
+         }
+         .goal-item .progress-bar .progress {
+            height: 100%;
+            background-color: var(--accent-primary);
+            border-radius: 5px;
+            transition: width 0.5s ease-in-out;
+         }
+         .goal-item .goal-actions {
+             margin-top: 1rem;
+             text-align: right;
+         }
+         .goal-item .delete-goal { /* Use btn styles */
+            background-color: transparent;
+            color: var(--accent-danger);
+            padding: 0.3rem 0.8rem;
+            font-size: 0.9rem;
+            width: auto; /* Override full width */
+            border: 1px solid var(--accent-danger);
+         }
+          .goal-item .delete-goal:hover {
+              background-color: rgba(231, 76, 60, 0.1);
+          }
+
+
+         /* Budget Styling */
+         .budget-category {
+             background-color: var(--bg-card);
+             padding: 1.5rem;
+             border-radius: 8px;
+             border: 1px solid var(--border-color);
+             box-shadow: 0 4px 12px var(--shadow-color);
+         }
+         .budget-category h3 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+             color: var(--text-heading);
+             border-bottom: none; /* Remove border from H3 */
+             padding-bottom: 0;
+         }
+         .budget-input-group {
+            display: flex;
+            gap: 0.8rem;
+            align-items: center;
+            margin-bottom: 1rem;
+         }
+         .budget-input-group input[type="number"] {
+            flex-grow: 1;
+            margin-bottom: 0; /* Remove margin from input */
+             padding: 0.7rem 0.9rem; /* Slightly smaller padding */
+             font-size: 0.95rem;
+         }
+         .budget-input-group .add-budget-btn {
+             width: auto; /* Allow button to size naturally */
+             padding: 0.7rem 1rem;
+             margin-top: 0;
+             flex-shrink: 0;
+             font-size: 0.9rem;
+         }
+         .budget-category .progress-bar {
+             width: 100%;
+             height: 8px;
+             background-color: var(--bg-input);
+             border-radius: 4px;
+             overflow: hidden;
+             margin-top: 0.5rem; /* Space above progress bar */
+         }
+         .budget-category .progress-bar .progress {
+             height: 100%;
+             background-color: var(--accent-secondary); /* Green for budget */
+             border-radius: 4px;
+             transition: width 0.5s ease-in-out;
+         }
+         .budget-category .progress-bar .progress.over-budget {
+             background-color: var(--accent-danger); /* Red if over */
+         }
+          .budget-status {
+             font-size: 0.85rem;
+             color: var(--text-secondary);
+             margin-top: 0.5rem;
+             text-align: right;
+         }
+
+
+        /* --- Utility & Helper Classes --- */
+        .sr-only { /* Screen reader only */
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+         .text-center { text-align: center; }
+         .text-muted { color: var(--text-secondary); }
+         .empty-state {
+             text-align: center;
+             padding: 3rem 1rem;
+             color: var(--text-secondary);
+             background-color: var(--bg-card);
+             border-radius: 8px;
+             border: 1px dashed var(--border-color);
+             margin-top: 1rem; /* Add margin if used standalone */
+         }
+          .empty-state i { font-size: 2rem; margin-bottom: 1rem; display: block; }
+
+
+        /* Hide submenu content by default */
+        .submenu-content { display: none; }
+        .submenu-content.active { display: block; animation: fadeIn 0.5s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Responsiveness --- */
+
+        /* Medium screens (tablets) */
+        @media (max-width: 992px) {
+            :root {
+                --sidebar-width: var(--sidebar-width-collapsed);
+            }
+             .sidebar:hover {
+                 width: var(--sidebar-width); /* Expand on hover */
+             }
+
+             .sidebar .sidebar-header h2 span,
+             .sidebar .menu li a span {
+                 opacity: 0; /* Hide text when collapsed */
+                 pointer-events: none; /* Prevent interaction */
+                 transition: opacity 0.1s ease; /* Faster fade out */
+             }
+             .sidebar:hover .sidebar-header h2 span,
+             .sidebar:hover .menu li a span {
+                  opacity: 1;
+                 pointer-events: auto;
+                 transition: opacity 0.2s ease 0.1s; /* Delay fade in slightly */
+             }
+
+             .sidebar .menu li a i { margin-right: 0; /* Center icon when collapsed */ }
+             .sidebar:hover .menu li a i { margin-right: 1rem; } /* Restore margin on hover */
+
+             .main-content { margin-left: var(--sidebar-width-collapsed); }
+              /* Corrected hover behavior for main content margin */
+              body:not(:has(.sidebar:hover)) .main-content {
+                 margin-left: var(--sidebar-width-collapsed);
+              }
+              body:has(.sidebar:hover) .main-content {
+                 margin-left: var(--sidebar-width);
+              }
+
+
+             .overview { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;}
+             .card p { font-size: 1.5rem; }
+             .chart-container { height: 350px; padding: 1.5rem; }
+             .transaction-filters { grid-template-columns: 1fr 1fr; } /* Maybe 2 columns */
+        }
+
+         /* Small screens (phones) */
+         @media (max-width: 768px) {
+             html { font-size: 15px; } /* Slightly smaller base font */
+             .main-content { padding: 1.5rem; }
+             header h1 { font-size: 1.8rem; }
+             h2 { font-size: 1.3rem; }
+             .overview { grid-template-columns: 1fr 1fr; } /* Force two columns max */
+             .card { padding: 1rem; }
+              .card p { font-size: 1.4rem; }
+             .chart-container { height: 300px; }
+              .transaction-filters { flex-direction: column; align-items: stretch; }
+              .transaction-filters > div { min-width: 0; } /* Allow filters to shrink */
+              .data-table th, .data-table td { padding: 0.7rem 0.9rem; font-size: 0.9rem; }
+               .btn { padding: 0.7rem 1.2rem; font-size: 0.95rem;}
+                #add-goal-form { grid-template-columns: 1fr; } /* Stack goal form inputs */
+                .funds-forms, .assets-container, #goals-list, .budget-categories {
+                    grid-template-columns: 1fr; /* Stack items */
+                    gap: 1rem;
+                }
+                .modal-content { padding: 1.5rem; max-width: 90%; }
+                 .form-actions { flex-direction: column; } /* Stack modal buttons */
+                 .form-actions .btn { flex-basis: auto; width: 100%; } /* Full width buttons stacked */
+                .add-transaction-buttons { gap: 1rem; }
+                .add-transaction-buttons .btn { min-width: 140px; padding: 0.7rem 1.5rem;}
+         }
+         @media (max-width: 576px) {
+              :root {
+                 --sidebar-width-collapsed: 60px;
+             }
+              .sidebar {
+                  width: var(--sidebar-width-collapsed);
+             }
+              .sidebar .sidebar-header h2 { display: none; } /* Hide header text */
+               .sidebar .menu li a span { display: none; } /* Hide menu text */
+               .sidebar .menu li a i { margin-right: 0; width: 100%; font-size: 1.4rem; }
+               /* Adjust main content margin when sidebar is collapsed */
+               body:not(:has(.sidebar:hover)) .main-content {
+                  margin-left: var(--sidebar-width-collapsed);
+                  padding: 1rem;
+               }
+               body:has(.sidebar:hover) .main-content {
+                   margin-left: var(--sidebar-width); /* Use full width when hovered */
+               }
+
+              .overview { grid-template-columns: 1fr; } /* Single column overview */
+              .card p { font-size: 1.5rem; }
+              .add-transaction-buttons { flex-direction: column; align-items: center;}
+         }
+
+
+    </style>
+
+</head>
 <body>
-    <div class="sidebar">
+    <aside class="sidebar">
+        <!-- Sidebar content remains the same -->
         <div class="sidebar-header">
-            <h2>Menu</h2>
+            <h2><i class="fas fa-landmark"></i> <span>Braavos</span></h2>
         </div>
         <ul class="menu">
-            <li>
-                <a href="#dashboard">
-                    <i class="fas fa-tachometer-alt"></i>
-                    Dashboard
+            <li class="active">
+                <a href="#dashboard" title="Dashboard">
+                    <i class="fas fa-tachometer-alt fa-fw"></i>
+                    <span>Dashboard</span>
                 </a>
             </li>
             <li>
-                <a href="#goals">
-                    <i class="fas fa-bullseye"></i>
-                    Goals
+                <a href="#goals" title="Goals">
+                    <i class="fas fa-bullseye fa-fw"></i>
+                    <span>Goals</span>
                 </a>
             </li>
             <li>
-                <a href="#funds">
-                    <i class="fas fa-money-bill"></i>
-                    Funds
+                <a href="#funds" title="Funds">
+                    <i class="fas fa-money-bill-wave fa-fw"></i>
+                    <span>Funds</span>
                 </a>
             </li>
             <li>
-                <a href="#assets">
-                    <i class="fas fa-home"></i>
-                    Assets
+                <a href="#assets" title="Assets">
+                    <i class="fas fa-home fa-fw"></i>
+                    <span>Assets</span>
                 </a>
             </li>
             <li>
-                <a href="#budget">
-                    <i class="fas fa-piggy-bank"></i>
-                    Budget
+                <a href="#budget" title="Budget">
+                    <i class="fas fa-piggy-bank fa-fw"></i>
+                    <span>Budget</span>
                 </a>
             </li>
         </ul>
-    </div>
-    <div class="main-content">
+    </aside>
+
+    <main class="main-content">
         <div class="container">
-            <header>
-                <h1>Braavos</h1>
-            </header>
-            <div id="dashboard" class="submenu-content">
-                <section class="dashboard">
-                    <div class="overview">
-                        <div class="card income-card">
-                            <h3>Total Income</h3>
-                            <p id="total-income">$0.00</p>
-                        </div>
-                        <div class="card expense-card">
-                            <h3>Total Expenses</h3>
-                            <p id="total-expenses">$0.00</p>
-                        </div>
-                        <div class="card balance-card">
-                            <h3>Balance</h3>
-                            <p id="balance">$0.00</p>
-                        </div>
-                        <div class="card funds-card">
-                            <h3>Funds</h3>
-                            <p id="total-funds">€0.00</p>
-                        </div>
+            <!-- Header section (can be dynamic later) -->
+            <!-- <header>
+                <h1>Welcome Back!</h1>
+            </header> -->
+
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="submenu-content active">
+                <h2>Dashboard Overview</h2>
+                <div class="overview">
+                    <div class="card net-worth-card">
+                        <h3>Net Worth</h3>
+                        <p id="net-worth">€0.00</p>
                     </div>
-                    <div class="chart-container">
-                        <canvas id="spendingChart"></canvas>
+                     <div class="card funds-card">
+                        <h3>Total Funds</h3>
+                        <p id="total-funds">€0.00</p>
                     </div>
-                </section>
+                    <div class="card income-card">
+                        <h3>Total Income</h3>
+                        <p id="total-income">€0.00</p>
+                    </div>
+                    <div class="card expense-card">
+                        <h3>Total Expenses</h3>
+                        <p id="total-expenses">€0.00</p>
+                    </div>
+                    <div class="card balance-card">
+                        <h3>Balance</h3>
+                        <p id="balance">€0.00</p>
+                    </div>
+                </div>
+
+                <h2>Spending Breakdown</h2>
+                <div class="chart-container">
+                    <canvas id="spendingChart"></canvas>
+                     <!-- Optional: Placeholder if no data -->
+                     <div id="chart-placeholder" class="empty-state" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-card);">
+                         <i class="fas fa-chart-pie"></i>
+                         <p>Add some expenses to see your spending breakdown here.</p>
+                     </div>
+                </div>
+
+                <!-- Add Transaction Buttons (Moved Here) -->
+                <div class="add-transaction-buttons">
+                    <button id="show-income-modal-btn" class="btn btn-income-trigger"><i class="fas fa-plus-circle"></i> Add Income</button>
+                    <button id="show-expense-modal-btn" class="btn btn-expense-trigger"><i class="fas fa-minus-circle"></i> Add Expense</button>
+                </div>
+
 
                 <section class="transactions">
-                    <h2>Transactions</h2>
+                    <h2>Recent Transactions</h2>
                     <div class="transaction-filters">
-                        <label for="filter-type">Filter by Type:</label>
-                        <select id="filter-type">
-                            <option value="all">All</option>
-                            <option value="income">Income</option>
-                            <option value="expense">Expense</option>
-                        </select>
-                        <label for="filter-category">Filter by Category:</label>
-                        <select id="filter-category">
-                            <option value="all">All</option>
-                        </select>
-                        <label for="sort-by">Sort By:</label>
-                        <select id="sort-by">
-                            <option value="date-newest">Date (Newest)</option>
-                            <option value="date-oldest">Date (Oldest)</option>
-                            <option value="amount-high">Amount (High to Low)</option>
-                            <option value="amount-low">Amount (Low to High)</option>
-                        </select>
+                        <div>
+                            <label for="filter-date-range">Date:</label> <!-- NEW DATE FILTER -->
+                            <select id="filter-date-range">
+                                <option value="today">Today</option>
+                                <option value="this-week">This Week</option>
+                                <option value="this-month" selected>This Month</option>
+                                <option value="past-6-months">Past 6 Months</option>
+                                <option value="past-year">Past Year</option>
+                                <option value="older">Older</option>
+                                <option value="all">All Time</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="filter-type">Type:</label>
+                            <select id="filter-type">
+                                <option value="all">All</option>
+                                <option value="income">Income</option>
+                                <option value="expense">Expense</option>
+                            </select>
+                        </div>
+                         <div>
+                            <label for="filter-category">Category:</label>
+                            <select id="filter-category">
+                                <option value="all">All Categories</option>
+                                <!-- Options populated by JS -->
+                            </select>
+                        </div>
+                         <div>
+                            <label for="sort-by">Sort By:</label>
+                            <select id="sort-by">
+                                <option value="date-newest">Date (Newest)</option>
+                                <option value="date-oldest">Date (Oldest)</option>
+                                <option value="amount-high">Amount (High to Low)</option>
+                                <option value="amount-low">Amount (Low to High)</option>
+                            </select>
+                        </div>
                     </div>
-                    <table class="transaction-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Type</th>
-                                <th>Category</th>
-                                <th>Amount</th>
-                                <th>Description</th>
-                                <th>Delete</th>
-                            </tr>
-                        </thead>
-                        <tbody id="transaction-list">
-                        </tbody>
-                    </table>
+                     <div class="data-table-wrapper">
+                        <table class="data-table transaction-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                    <th>Description</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transaction-list">
+                                <!-- Transaction rows will be inserted here -->
+                                <!-- Example Empty State -->
+                                <!-- <tr><td colspan="6" class="text-center text-muted" style="padding: 2rem;">No transactions match the current filters.</td></tr> -->
+                            </tbody>
+                        </table>
+                         <div id="transaction-empty-state" class="empty-state" style="display: none; margin: 0; border-radius: 0 0 8px 8px; border-top: none; border-style: solid;">
+                            <i class="fas fa-receipt"></i>
+                             <p>No transactions found for the selected criteria.</p>
+                         </div>
+                     </div>
                 </section>
 
-                <section class="input-forms">
-                    <div class="input-form">
-                        <h2>Add Income</h2>
-                        <form id="add-income-form">
-                            <label for="income-date">Date:</label>
-                            <input type="date" id="income-date" required>
-                            <label for="income-category">Category:</label>
-                            <select id="income-category" required>
-                                <option value="salary">Salary</option>
-                                <option value="freelance">Freelance</option>
-                                <option value="investment">Investment</option>
-                                <option value="other">Other</option>
-                            </select>
-                            <label for="income-amount">Amount:</label>
-                            <input type="number" id="income-amount" step="0.01" required>
-                            <label for="income-description">Description:</label>
-                            <textarea id="income-description"></textarea>
-                            <label for="income-recurring">Recurring:</label>
-                            <select id="income-recurring">
-                                <option value="none">None</option>
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="monthly">Monthly</option>
-                                <option value="yearly">Yearly</option>
-                            </select>
-                            <button type="submit" class="btn">Add Income</button>
-                        </form>
-                    </div>
+                <!-- Forms removed from here, will be in modals below -->
 
-                    <div class="input-form">
-                        <h2>Add Expense</h2>
-                        <form id="add-expense-form">
-                            <label for="expense-date">Date:</label>
-                            <input type="date" id="expense-date" required>
-                            <label for="expense-category">Category:</label>
-                            <select id="expense-category" required>
-                                <option value="food">Food</option>
-                                <option value="rent">Rent</option>
-                                <option value="utilities">Utilities</option>
-                                <option value="transportation">Transportation</option>
-                                <option value="entertainment">Entertainment</option>
-                                <option value="other">Other</option>
-                            </select>
-                            <label for="expense-amount">Amount:</label>
-                            <input type="number" id="expense-amount" step="0.01" required>
-                            <label for="expense-description">Description:</label>
-                            <textarea id="expense-description"></textarea>
-                            <label for="expense-recurring">Recurring:</label>
-                            <select id="expense-recurring">
-                                <option value="none">None</option>
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="yearly">Yearly</option>
-                            </select>
-                            <button type="submit" class="btn">Add Expense</button>
-                        </form>
-                    </div>
-                </section>
-            </div>
-            <div id="funds" class="submenu-content" style="display: none;">
-                <h2>Funds</h2>
-                <table id="funds-table">
-                    <thead>
-                        <tr>
-                            <th>Type</th>
-                            <th>Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-                <div class="funds-summary">
-                    <h3>Total Funds</h3>
-                    <p id="funds-total-display">$0.00</p>
-                </div>
-                <div class="funds-forms">
-                    <div class="asset-category">
-                        <h3>Add Cash</h3>
-                        <div class="asset-list"></div>
-                        <form id="add-cash-form">
-                            <label for="cash-name">Name:</label>
-                            <input type="text" id="cash-name" required>
-                            <label for="cash-amount">Amount:</label>
-                            <input type="number" id="cash-amount" step="0.01" required>
-                            <button type="submit" class="btn">Add Cash</button>
-                        </form>
-                    </div>
-                    <div class="asset-category">
-                        <h3>Add Checking</h3>
-                        <div class="asset-list"></div>
-                        <form id="add-checking-form">
-                            <label for="checking-name">Name:</label>
-                            <input type="text" id="checking-name" required>
-                            <label for="checking-amount">Amount:</label>
-                            <input type="number" id="checking-amount" step="0.01" required>
-                            <button type="submit" class="btn">Add Checking</button>
-                        </form>
-                    </div>
-                    <div class="asset-category">
-                        <h3>Add Savings</h3>
-                        <div class="asset-list"></div>
-                        <form id="add-savings-form">
-                            <label for="savings-name">Name:</label>
-                            <input type="text" id="savings-name" required>
-                            <label for="savings-amount">Amount:</label>
-                            <input type="number" id="savings-amount" step="0.01" required>
-                            <button type="submit" class="btn">Add Savings</button>
-                        </form>
-                    </div>
-                    <div class="asset-category">
-                        <h3>Add Investments</h3>
-                         <div class="asset-list"></div>
-                        <form id="add-investments-form">
-                            <label for="investment-name">Name:</label>
-                            <input type="text" id="investment-name" required>
-                            <label for="investment-amount">Amount:</label>
-                            <input type="number" id="investment-amount" step="0.01" required>
-                            <button type="submit" class="btn">Add Investments</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <div id="goals" class="submenu-content" style="display: none;">
-                <h2>Manage Goals</h2>
+            </section> <!-- End Dashboard -->
+
+             <section id="goals" class="submenu-content">
+                 <!-- Goals content -->
+                  <h2><i class="fas fa-bullseye" style="color: var(--accent-primary);"></i> Financial Goals</h2>
                 <form id="add-goal-form">
-                    <div class="goal-input">
+                    <div class="form-group"> <!-- Wrapped in form-group -->
                         <label for="goal-name">Goal Name:</label>
-                        <input type="text" id="goal-name" required>
-                    </div>
-                    <div class="goal-input">
-                        <label for="goal-amount">Target Amount:</label>
-                        <input type="number" id="goal-amount" step="0.01" required>
-                    </div>
-                    <div class="goal-input">
-                        <label for="goal-due-date">Due Date (Optional):</label>
+                        <input type="text" id="goal-name" placeholder="E.g., New Car Down Payment" required>
+                    </div>                   
+                    <div class="form-group">
+                        <label for="goal-amount">Target Amount (€):</label>
+                        <input type="number" id="goal-amount" step="0.01" min="1" placeholder="5000.00" required>
+                    </div>                 
+                    <div class="form-group">
+                        <label for="goal-due-date">Target Date (Optional):</label>
                         <input type="date" id="goal-due-date">
                     </div>
-                    <button type="submit" class="btn">Add Goal</button>
+                    <button type="submit" class="btn"><i class="fas fa-plus"></i> Add New Goal</button>
                 </form>
                 <div id="goals-list">
-                    <!-- Goals will be listed here -->
+                     <!-- Goals will be listed here -->
+                     <!-- Empty State for Goals -->
+                     <!-- <div class="empty-state">
+                            <i class="fas fa-flag-checkered"></i>
+                            <p>No goals set yet. Create your first goal above!</p>
+                         </div> -->
                 </div>
-            </div>
-            <div id="assets" class="submenu-content" style="display: none;">
-                <h2>Assets</h2>
-                <div class="asset-category">
-                    <h3>Real Estate</h3>
-                    <div class="asset-list" id="real-estate-list">
-                        <!-- Real estate assets will be listed here -->
+             </section>
+             <section id="funds" class="submenu-content">
+                 <!-- Funds content -->
+                  <h2><i class="fas fa-money-bill-wave" style="color:var(--accent-info)"></i> Funds Management</h2>
+                 <div class="funds-summary">
+                    <h3>Total Liquid Funds</h3>
+                    <p id="funds-total-display">€0.00</p>
+                </div>
+                 <div class="funds-forms">
+                    <div class="form-card">
+                        <h3><i class="fas fa-wallet"></i> Cash</h3>
+                        <ul class="item-list" id="cash-list"></ul>
+                        <form id="add-cash-form">
+                            <div class="form-group">
+                                <label for="cash-name">Source Name:</label>
+                                <input type="text" id="cash-name" placeholder="E.g., Wallet" required>
+                            </div>
+                             <div class="form-group">
+                                <label for="cash-amount">Amount (€):</label>
+                                <input type="number" id="cash-amount" step="0.01" min="0" placeholder="0.00" required>
+                            </div>
+                            <button type="submit" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Cash</button>
+                        </form>
                     </div>
-                    <form id="add-real-estate-form">
-                        <label for="real-estate-name">Asset Name:</label>
-                        <input type="text" id="real-estate-name" required>
-                        <label for="real-estate-amount">Amount:</label>
-                        <input type="number" id="real-estate-amount" step="0.01" required>
-                        <button type="submit" class="btn">Add Asset</button>
-                    </form>
-                </div>
-                <div class="asset-category">
-                    <h3>Vehicles</h3>
-                    <div class="asset-list" id="vehicle-list">
-                        <!-- Vehicle assets will be listed here -->
+                     <div class="form-card">
+                        <h3><i class="fas fa-credit-card"></i> Checking</h3>
+                        <ul class="item-list" id="checking-list"></ul>
+                        <form id="add-checking-form">
+                             <div class="form-group">
+                                <label for="checking-name">Account Name:</label>
+                                <input type="text" id="checking-name" placeholder="E.g., Main Bank" required>
+                            </div>
+                             <div class="form-group">
+                                <label for="checking-amount">Balance (€):</label>
+                                <input type="number" id="checking-amount" step="0.01" min="0" placeholder="0.00" required>
+                            </div>
+                            <button type="submit" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Checking</button>
+                        </form>
                     </div>
-                    <form id="add-vehicle-form">
-                        <label for="vehicle-name">Asset Name:</label>
-                        <input type="text" id="vehicle-name" required>
-                        <label for="vehicle-amount">Amount:</label>
-                        <input type="number" id="vehicle-amount" step="0.01" required>
-                        <button type="submit" class="btn">Add Asset</button>
-                    </form>
-                </div>
-                 <div class="asset-category">
-                    <h3>Luxuries</h3>
-                    <div class="asset-list" id="luxury-list">
-                        <!-- Luxury assets will be listed here -->
+                     <div class="form-card">
+                        <h3><i class="fas fa-piggy-bank"></i> Savings</h3>
+                        <ul class="item-list" id="savings-list"></ul>
+                        <form id="add-savings-form">
+                              <div class="form-group">
+                                <label for="savings-name">Account Name:</label>
+                                <input type="text" id="savings-name" placeholder="E.g., Emergency Fund" required>
+                            </div>
+                             <div class="form-group">
+                                <label for="savings-amount">Balance (€):</label>
+                                <input type="number" id="savings-amount" step="0.01" min="0" placeholder="0.00" required>
+                            </div>
+                            <button type="submit" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Savings</button>
+                        </form>
                     </div>
-                    <form id="add-luxury-form">
-                        <label for="luxury-name">Asset Name:</label>
-                        <input type="text" id="luxury-name" required>
-                        <label for="luxury-amount">Amount:</label>
-                        <input type="number" id="luxury-amount" step="0.01" required>
-                        <button type="submit" class="btn">Add Asset</button>
-                    </form>
-                </div>
-                <div class="asset-category">
-                    <h3>Other</h3>
-                    <div class="asset-list" id="other-list">
-                        <!-- Other assets will be listed here -->
+                    <div class="form-card">
+                        <h3><i class="fas fa-chart-line"></i> Investments</h3>
+                         <ul class="item-list" id="investment-list"></ul>
+                        <form id="add-investments-form">
+                            <div class="form-group">
+                                <label for="investment-name">Account/Asset Name:</label>
+                                <input type="text" id="investment-name" placeholder="E.g., Stock Portfolio" required>
+                            </div>
+                             <div class="form-group">
+                                <label for="investment-amount">Current Value (€):</label>
+                                <input type="number" id="investment-amount" step="0.01" min="0" placeholder="0.00" required>
+                             </div>
+                            <button type="submit" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Investment</button>
+                        </form>
                     </div>
-                    <form id="add-other-form">
-                        <label for="other-name">Asset Name:</label>
-                        <input type="text" id="other-name" required>
-                        <label for="other-amount">Amount:</label>
-                        <input type="number" id="other-amount" step="0.01" required>
-                        <button type="submit" class="btn">Add Asset</button>
-                    </form>
-                </div>
-            </div>
-            <div id="budget" class="submenu-content" style="display: none;">
-                <h2>Budget</h2>
-                <div class="budget-category">
-                    <h3>Food</h3>
-                    <label for="food-budget">Monthly Budget:</label>
-                    <input type="number" id="food-budget" step="0.01">
-                    <button class="btn add-budget-btn" data-category="food">Add Budget</button>                
-                    <br><br>
-                    <div class="progress-bar">
-                        <div class="progress" id="food-progress"></div>
+                    <!-- UPDATED: Credit Cards -->
+                    <div class="form-card">
+                        <h3><i class="fa-solid fa-credit-card"></i> Credit Cards (Prepaid/Debit)</h3>
+                        <ul class="item-list" id="credit-card-list"></ul>
+                        <form id="add-credit-card-form">
+                            <div class="form-group">
+                                <label for="credit-card-name">Card Name/Issuer:</label>
+                                <input type="text" id="credit-card-name" placeholder="E.g., Visa Prepaid" required>
+                            </div>
+                             <div class="form-group">
+                                <label for="credit-card-amount">Current Balance (€):</label>
+                                <input type="number" id="credit-card-amount" step="0.01" min="0" placeholder="0.00" required>
+                            </div>
+                            <button type="submit" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Card Balance</button>
+                            <p class="text-muted" style="font-size: 0.8rem; margin-top: 0.5rem;"></p>
+                        </form>
                     </div>
-                </div>
-                 <div class="budget-category">
-                    <h3>Rent</h3>
-                    <label for="rent-budget">Monthly Budget:</label>
-                    <input type="number" id="rent-budget" step="0.01">
-                    <button class="btn add-budget-btn" data-category="rent">Add Budget</button>
-                    <br><br>
-                     <div class="progress-bar">
-                        <div class="progress" id="rent-progress"></div>
-                    </div>
-                </div>
-                 <div class="budget-category">
-                    <h3>Utilities</h3>
-                    <label for="utilities-budget">Monthly Budget:</label>
-                    <input type="number" id="utilities-budget" step="0.01">
-                    <button class="btn add-budget-btn" data-category="utilities">Add Budget</button>
-                     <div class="progress-bar">
-                        <div class="progress" id="utilities-progress"></div>
-                    </div>
-                </div>
-                 <div class="budget-category">
-                    <h3>Transportation</h3>
-                    <label for="transportation-budget">Monthly Budget:</label>
-                    <input type="number" id="transportation-budget" step="0.01">
-                    <button class="btn add-budget-btn" data-category="transportation">Add Budget</button>
-                    <br><br>
-                     <div class="progress-bar">
-                        <div class="progress" id="transportation-progress"></div>
-                    </div>
-                </div>
-                 <div class="budget-category">
-                    <h3>Entertainment</h3>
-                    <label for="entertainment-budget">Monthly Budget:</label>
-                    <input type="number" id="entertainment-budget" step="0.01">
-                    <button class="btn add-budget-btn" data-category="entertainment">Add Budget</button>
-                    <br><br>
-                     <div class="progress-bar">
-                        <div class="progress" id="entertainment-progress"></div>
-                    </div>
-                </div>
-                 <div class="budget-category">
-                    <h3>Other</h3>
-                    <label for="other-budget">Monthly Budget:</label>
-                    <input type="number" id="other-budget" step="0.01">
-                    <button class="btn add-budget-btn" data-category="other">Add Budget</button>
-                    <br><br>
-                     <div class="progress-bar">
-                        <div class="progress" id="other-progress"></div>
+                    <!-- NEW: Crypto -->
+                     <div class="form-card">
+                        <h3><i class="fa-solid fa-coins"></i> Crypto</h3>
+                        <ul class="item-list" id="crypto-list"></ul>
+                        <form id="add-crypto-form">
+                            <div class="form-group">
+                                <label for="crypto-name">Coin/Wallet Name:</label>
+                                <input type="text" id="crypto-name" placeholder="E.g., Bitcoin Wallet" required>
+                            </div>
+                             <div class="form-group">
+                                <label for="crypto-amount">Current Value (€):</label>
+                                <input type="number" id="crypto-amount" step="0.01" min="0" placeholder="0.00" required>
+                             </div>
+                            <button type="submit" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Crypto Value</button>
+                        </form>
                     </div>
                 </div>
+             </section>
+             <section id="assets" class="submenu-content">
+                 <!-- Assets content -->
+                  <h2><i class="fas fa-home" style="color: var(--accent-warning);"></i> Assets Overview</h2>
+                  <!-- NEW: Assets Summary -->
+                  <div class="assets-summary">
+                    <h3>Total Asset Value</h3>
+                    <p id="assets-total-display">€0.00</p>
+                  </div>
+                  <div class="assets-container">
+                    <div class="form-card">
+                        <h3><i class="fas fa-building"></i> Real Estate</h3>
+                        <ul class="item-list" id="real-estate-list"></ul>
+                        <form id="add-real-estate-form">
+                            <div class="form-group">
+                                <label for="real-estate-name">Property Name:</label>
+                                <input type="text" id="real-estate-name" placeholder="E.g., Primary Residence" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="real-estate-value">Estimated Value (€):</label>
+                                <input type="number" id="real-estate-value" step="0.01" min="0" placeholder="250000.00" required>
+                            </div>
+                            <button type="submit" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Real Estate</button>
+                        </form>
+                    </div>
+                     <div class="form-card">
+                        <h3><i class="fas fa-car"></i> Vehicles</h3>
+                        <ul class="item-list" id="vehicle-list"></ul>
+                        <form id="add-vehicle-form">
+                            <div class="form-group">
+                                <label for="vehicle-name">Vehicle Name:</label>
+                                <input type="text" id="vehicle-name" placeholder="E.g., Toyota Camry 2018" required>
+                             </div>
+                             <div class="form-group">
+                                <label for="vehicle-value">Estimated Value (€):</label>
+                                <input type="number" id="vehicle-value" step="0.01" min="0" placeholder="15000.00" required>
+                            </div>
+                            <button type="submit" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Vehicle</button>
+                        </form>
+                    </div>
+                    <!-- NEW: Electronics -->
+                    <div class="form-card">
+                        <h3><i class="fas fa-laptop"></i> Electronics</h3>
+                        <ul class="item-list" id="electronics-list"></ul>
+                        <form id="add-electronics-form">
+                            <div class="form-group">
+                                <label for="electronics-name">Item Name:</label>
+                                <input type="text" id="electronics-name" placeholder="E.g., MacBook Pro" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="electronics-value">Estimated Value (€):</label>
+                                <input type="number" id="electronics-value" step="0.01" min="0" placeholder="1200.00" required>
+                            </div>
+                            <button type="submit" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Electronics</button>
+                        </form>
+                    </div>
+                    <!-- NEW: Furniture -->
+                    <div class="form-card">
+                        <h3><i class="fas fa-couch"></i> Furniture</h3>
+                        <ul class="item-list" id="furniture-list"></ul>
+                        <form id="add-furniture-form">
+                            <div class="form-group">
+                                <label for="furniture-name">Item/Set Name:</label>
+                                <input type="text" id="furniture-name" placeholder="E.g., Living Room Sofa Set" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="furniture-value">Estimated Value (€):</label>
+                                <input type="number" id="furniture-value" step="0.01" min="0" placeholder="800.00" required>
+                            </div>
+                            <button type="submit" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Furniture</button>
+                        </form>
+                    </div>
+                    <!-- Existing: Collectibles & Luxuries -->
+                     <div class="form-card">
+                        <h3><i class="fas fa-gem"></i> Collectibles & Luxuries</h3>
+                        <ul class="item-list" id="luxury-list"></ul>
+                        <form id="add-luxury-form">
+                            <div class="form-group">
+                                <label for="luxury-name">Item Name:</label>
+                                <input type="text" id="luxury-name" placeholder="E.g., Watch Collection" required>
+                             </div>
+                             <div class="form-group">
+                                <label for="luxury-value">Estimated Value (€):</label>
+                                <input type="number" id="luxury-value" step="0.01" min="0" placeholder="5000.00" required>
+                             </div>
+                            <button type="submit" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Luxury Item</button>
+                        </form>
+                    </div>
+                    <!-- Existing: Other Assets -->
+                    <div class="form-card">
+                        <h3><i class="fas fa-box-open"></i> Other Assets</h3>
+                        <ul class="item-list" id="other-asset-list"></ul>
+                        <form id="add-other-asset-form">
+                            <div class="form-group">
+                                <label for="other-asset-name">Asset Name:</label>
+                                <input type="text" id="other-asset-name" placeholder="E.g., Artwork" required>
+                            </div>
+                             <div class="form-group">
+                                <label for="other-asset-value">Estimated Value (€):</label>
+                                <input type="number" id="other-asset-value" step="0.01" min="0" placeholder="1000.00" required>
+                            </div>
+                            <button type="submit" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Other Asset</button>
+                        </form>
+                    </div>
                 </div>
+             </section>
+             <section id="budget" class="submenu-content">
+                 <!-- Budget content -->
+                 <h2><i class="fas fa-piggy-bank" style="color: var(--accent-secondary);"></i> Budget Settings</h2>
+                <div class="budget-categories">
+                    <div class="budget-category">
+                        <h3>Food</h3>
+                        <div class="budget-input-group">
+                            <label for="food-budget" class="sr-only">Monthly Food Budget:</label>
+                            <input type="number" id="food-budget" step="0.01" min="0" placeholder="Monthly Budget (€)">
+                            <button class="btn add-budget-btn" data-category="food">Set</button>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress" id="food-progress" style="width: 0%;"></div>
+                        </div>
+                        <p class="budget-status" id="food-budget-status">Budget: €0.00 | Spent: €0.00</p>
+                    </div>
+                    <div class="budget-category">
+                        <h3>Rent/Mortgage</h3>
+                         <div class="budget-input-group">
+                             <label for="rent-budget" class="sr-only">Monthly Rent Budget:</label>
+                             <input type="number" id="rent-budget" step="0.01" min="0" placeholder="Monthly Budget (€)">
+                             <button class="btn add-budget-btn" data-category="rent">Set</button>
+                        </div>
+                         <div class="progress-bar">
+                            <div class="progress" id="rent-progress" style="width: 0%;"></div>
+                        </div>
+                         <p class="budget-status" id="rent-budget-status">Budget: €0.00 | Spent: €0.00</p>
+                    </div>
+                     <div class="budget-category">
+                        <h3>Utilities</h3>
+                         <div class="budget-input-group">
+                            <label for="utilities-budget" class="sr-only">Monthly Utilities Budget:</label>
+                            <input type="number" id="utilities-budget" step="0.01" min="0" placeholder="Monthly Budget (€)">
+                            <button class="btn add-budget-btn" data-category="utilities">Set</button>
+                        </div>
+                         <div class="progress-bar">
+                            <div class="progress" id="utilities-progress" style="width: 0%;"></div>
+                        </div>
+                         <p class="budget-status" id="utilities-budget-status">Budget: €0.00 | Spent: €0.00</p>
+                    </div>
+                    <div class="budget-category">
+                        <h3>Transportation</h3>
+                         <div class="budget-input-group">
+                            <label for="transportation-budget" class="sr-only">Monthly Transportation Budget:</label>
+                            <input type="number" id="transportation-budget" step="0.01" min="0" placeholder="Monthly Budget (€)">
+                             <button class="btn add-budget-btn" data-category="transportation">Set</button>
+                         </div>
+                        <div class="progress-bar">
+                            <div class="progress" id="transportation-progress" style="width: 0%;"></div>
+                        </div>
+                         <p class="budget-status" id="transportation-budget-status">Budget: €0.00 | Spent: €0.00</p>
+                    </div>
+                     <div class="budget-category">
+                        <h3>Entertainment</h3>
+                         <div class="budget-input-group">
+                            <label for="entertainment-budget" class="sr-only">Monthly Entertainment Budget:</label>
+                            <input type="number" id="entertainment-budget" step="0.01" min="0" placeholder="Monthly Budget (€)">
+                             <button class="btn add-budget-btn" data-category="entertainment">Set</button>
+                        </div>
+                         <div class="progress-bar">
+                            <div class="progress" id="entertainment-progress" style="width: 0%;"></div>
+                        </div>
+                         <p class="budget-status" id="entertainment-budget-status">Budget: €0.00 | Spent: €0.00</p>
+                    </div>
+                    <div class="budget-category">
+                        <h3>Health</h3>
+                         <div class="budget-input-group">
+                            <label for="health-budget" class="sr-only">Monthly Health Budget:</label>
+                            <input type="number" id="health-budget" step="0.01" min="0" placeholder="Monthly Budget (€)">
+                             <button class="btn add-budget-btn" data-category="health">Set</button>
+                        </div>
+                         <div class="progress-bar">
+                            <div class="progress" id="health-progress" style="width: 0%;"></div>
+                        </div>
+                         <p class="budget-status" id="health-budget-status">Budget: €0.00 | Spent: €0.00</p>
+                    </div>
+                    <div class="budget-category">
+                        <h3>Clothing</h3>
+                         <div class="budget-input-group">
+                            <label for="clothing-budget" class="sr-only">Monthly Clothing Budget:</label>
+                            <input type="number" id="clothing-budget" step="0.01" min="0" placeholder="Monthly Budget (€)">
+                             <button class="btn add-budget-btn" data-category="clothing">Set</button>
+                        </div>
+                         <div class="progress-bar">
+                            <div class="progress" id="clothing-progress" style="width: 0%;"></div>
+                        </div>
+                         <p class="budget-status" id="clothing-budget-status">Budget: €0.00 | Spent: €0.00</p>
+                    </div>
+                    <!-- RENAMED: Education -> Technology -->
+                    <div class="budget-category">
+                        <h3>Technology</h3>
+                         <div class="budget-input-group">
+                            <label for="technology-budget" class="sr-only">Monthly Technology Budget:</label>
+                            <input type="number" id="technology-budget" step="0.01" min="0" placeholder="Monthly Budget (€)">
+                             <button class="btn add-budget-btn" data-category="technology">Set</button>
+                        </div>
+                         <div class="progress-bar">
+                            <div class="progress" id="technology-progress" style="width: 0%;"></div>
+                        </div>
+                         <p class="budget-status" id="technology-budget-status">Budget: €0.00 | Spent: €0.00</p>
+                    </div>
+                     <div class="budget-category">
+                        <h3>Other</h3>
+                         <div class="budget-input-group">
+                            <label for="other-budget" class="sr-only">Monthly Other Budget:</label>
+                            <input type="number" id="other-budget" step="0.01" min="0" placeholder="Monthly Budget (€)">
+                            <button class="btn add-budget-btn" data-category="other">Set</button>
+                        </div>
+                         <div class="progress-bar">
+                            <div class="progress" id="other-progress" style="width: 0%;"></div>
+                        </div>
+                        <p class="budget-status" id="other-budget-status">Budget: €0.00 | Spent: €0.00</p>
+                    </div>
+                </div>
+             </section>
+        </div> <!-- End Container -->
+    </main> <!-- End Main Content -->
+
+    <!-- Modal for Add Income -->
+    <div id="income-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-btn" title="Close">&times;</button>
+            <div class="input-form"> <!-- Reuse existing form styling container -->
+                <h2><i class="fas fa-plus-circle" style="color: var(--accent-secondary);"></i> Add Income</h2>
+                <form id="add-income-form">
+                    <div class="form-group">
+                        <label for="income-date">Date:</label>
+                        <input type="date" id="income-date" required>
+                    </div>
+                     <div class="form-group">
+                        <label for="income-category">Category:</label>
+                        <select id="income-category" required>
+                            <option value="" disabled selected>Select Category</option>
+                            <option value="salary">Salary</option>
+                            <option value="freelance">Freelance</option>
+                            <option value="investment">Investment</option>
+                            <option value="gift">Gift</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="income-amount">Amount (€):</label>
+                        <input type="number" id="income-amount" step="0.01" min="0.01" placeholder="e.g., 1500.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="income-description">Description (Optional):</label>
+                        <textarea id="income-description" placeholder="E.g., Monthly paycheck"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="income-recurring">Recurring:</label>
+                        <select id="income-recurring">
+                            <option value="none">None</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <!-- NEW: Form Actions Container -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn" style="background-color: var(--accent-secondary);"><i class="fas fa-check"></i> Add Income</button>
+                        <button type="button" id="add-income-continue-btn" class="btn btn-secondary"><i class="fas fa-plus-circle"></i> Add & Continue</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-    <script src="script.js"></script>
-</body>
 
+    <!-- Modal for Add Expense -->
+    <div id="expense-modal" class="modal-overlay">
+        <div class="modal-content">
+             <button class="modal-close-btn" title="Close">&times;</button>
+             <div class="input-form">
+                 <h2><i class="fas fa-minus-circle" style="color: var(--accent-danger);"></i> Add Expense</h2>
+                <form id="add-expense-form">
+                    <div class="form-group">
+                        <label for="expense-date">Date:</label>
+                        <input type="date" id="expense-date" required>
+                    </div>
+                     <div class="form-group">
+                        <label for="expense-category">Category:</label>
+                        <select id="expense-category" required>
+                            <option value="" disabled selected>Select Category</option>
+                            <option value="food">Food</option>
+                            <option value="rent">Rent/Mortgage</option>
+                            <option value="utilities">Utilities</option>
+                            <option value="transportation">Transportation</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="health">Health</option>
+                            <option value="clothing">Clothing</option>
+                            <option value="technology">Technology</option> <!-- RENAMED -->
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                     <div class="form-group">
+                        <label for="expense-amount">Amount (€):</label>
+                        <input type="number" id="expense-amount" step="0.01" min="0.01" placeholder="e.g., 45.50" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expense-description">Description (Optional):</label>
+                        <textarea id="expense-description" placeholder="E.g., Groceries from Lidl"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="expense-recurring">Recurring:</label>
+                        <select id="expense-recurring">
+                            <option value="none">None</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                     <!-- NEW: Form Actions Container -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-danger"><i class="fas fa-check"></i> Add Expense</button>
+                        <button type="button" id="add-expense-continue-btn" class="btn btn-secondary"><i class="fas fa-plus-circle"></i> Add & Continue</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+<!-- Embedded JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM Element Selection ---
+        const netWorthDisplay = document.getElementById('net-worth');
+        const totalIncomeDisplay = document.getElementById('total-income');
+        const totalExpensesDisplay = document.getElementById('total-expenses');
+        const balanceDisplay = document.getElementById('balance');
+        const transactionList = document.getElementById('transaction-list');
+        const transactionEmptyState = document.getElementById('transaction-empty-state'); // ** NEW ** Table empty state
+        // Forms are now inside modals, but IDs remain the same
+        const incomeForm = document.getElementById('add-income-form');
+        const expenseForm = document.getElementById('add-expense-form');
+        // Filters
+        const filterDateRange = document.getElementById('filter-date-range');
+        const filterType = document.getElementById('filter-type');
+        const filterCategory = document.getElementById('filter-category');
+        const sortBy = document.getElementById('sort-by');
+        // Chart
+        const chartCanvas = document.getElementById('spendingChart')?.getContext('2d');
+        const chartPlaceholder = document.getElementById('chart-placeholder');
+        let spendingChart;
+
+        // Funds elements
+        const totalFundsDisplay = document.getElementById('total-funds'); // In overview
+        const fundsTotalDisplay = document.getElementById('funds-total-display'); // In Funds section
+        const addCashForm = document.getElementById('add-cash-form');
+        const addCheckingForm = document.getElementById('add-checking-form');
+        const addSavingsForm = document.getElementById('add-savings-form');
+        const addInvestmentsForm = document.getElementById('add-investments-form');
+        const addCreditCardForm = document.getElementById('add-credit-card-form'); // UPDATED
+        const addCryptoForm = document.getElementById('add-crypto-form');
+        const cashListUl = document.getElementById('cash-list');
+        const checkingListUl = document.getElementById('checking-list');
+        const savingsListUl = document.getElementById('savings-list');
+        const investmentListUl = document.getElementById('investment-list');
+        const creditCardListUl = document.getElementById('credit-card-list'); // UPDATED
+        const cryptoListUl = document.getElementById('crypto-list');
+        const fundsFormsContainer = document.querySelector('.funds-forms');
+
+        // Goals elements
+        const addGoalForm = document.getElementById('add-goal-form');
+        const goalsList = document.getElementById('goals-list');
+
+        // Assets elements
+        const assetsContainer = document.querySelector('.assets-container');
+        const assetsTotalDisplay = document.getElementById('assets-total-display'); // ** NEW ** Assets summary
+        const realEstateListUl = document.getElementById('real-estate-list');
+        const vehicleListUl = document.getElementById('vehicle-list');
+        const luxuryListUl = document.getElementById('luxury-list');
+        const otherAssetListUl = document.getElementById('other-asset-list');
+        const electronicsListUl = document.getElementById('electronics-list');
+        const furnitureListUl = document.getElementById('furniture-list');
+        const addRealEstateForm = document.getElementById('add-real-estate-form');
+        const addVehicleForm = document.getElementById('add-vehicle-form');
+        const addLuxuryForm = document.getElementById('add-luxury-form');
+        const addOtherAssetForm = document.getElementById('add-other-asset-form');
+        const addElectronicsForm = document.getElementById('add-electronics-form');
+        const addFurnitureForm = document.getElementById('add-furniture-form');
+
+        // Budget elements
+        const budgetCategoriesContainer = document.querySelector('.budget-categories');
+
+        // Sidebar navigation elements
+        const sidebarLinks = document.querySelectorAll('.sidebar .menu a');
+        const sidebarListItems = document.querySelectorAll('.sidebar .menu li');
+        const submenuContents = document.querySelectorAll('.main-content .submenu-content');
+
+        // Modal elements
+        const incomeModal = document.getElementById('income-modal');
+        const expenseModal = document.getElementById('expense-modal');
+        const showIncomeBtn = document.getElementById('show-income-modal-btn');
+        const showExpenseBtn = document.getElementById('show-expense-modal-btn');
+        const modalOverlays = document.querySelectorAll('.modal-overlay');
+        const closeButtons = document.querySelectorAll('.modal-close-btn');
+        // ** NEW ** Continue buttons
+        const addIncomeContinueBtn = document.getElementById('add-income-continue-btn');
+        const addExpenseContinueBtn = document.getElementById('add-expense-continue-btn');
+
+
+        // --- State Variables ---
+        let transactions = JSON.parse(localStorage.getItem('braavos_transactions')) || [];
+        let goals = JSON.parse(localStorage.getItem('braavos_goals')) || [];
+
+        // UPDATED Default Assets structure
+        let defaultAssets = { realEstate: [], vehicles: [], electronics: [], furniture: [], luxuries: [], other: [] };
+        let assets = JSON.parse(localStorage.getItem('braavos_assets')) || defaultAssets;
+        // Check for valid assets structure
+        if (typeof assets !== 'object' || assets === null || !Object.keys(defaultAssets).every(key => key in assets)) {
+            console.warn("Invalid 'assets' structure found in localStorage. Resetting to default.");
+            assets = defaultAssets;
+        }
+
+        // UPDATED Default Funds structure
+        let defaultFunds = { cash: [], checking: [], savings: [], investments: [], creditCards: [], crypto: [] };
+        let funds = JSON.parse(localStorage.getItem('braavos_funds')) || defaultFunds;
+         // Check for valid funds structure
+         if (typeof funds !== 'object' || funds === null || !Object.keys(defaultFunds).every(key => key in funds)) {
+             console.warn("Invalid 'funds' structure found in localStorage. Resetting to default.");
+             funds = defaultFunds;
+        }
+
+        let budgets = JSON.parse(localStorage.getItem('braavos_budgets')) || {};
+
+        // --- Core Functions ---
+
+        function saveData() {
+            localStorage.setItem('braavos_transactions', JSON.stringify(transactions));
+            localStorage.setItem('braavos_goals', JSON.stringify(goals));
+            localStorage.setItem('braavos_assets', JSON.stringify(assets));
+            localStorage.setItem('braavos_funds', JSON.stringify(funds));
+            localStorage.setItem('braavos_budgets', JSON.stringify(budgets));
+        }
+
+        function formatCurrency(amount) {
+            // Handle potential non-numeric inputs gracefully
+            const numAmount = parseFloat(amount);
+            if (isNaN(numAmount)) {
+                 // console.warn("formatCurrency received non-numeric value:", amount);
+                 return '€--.--'; // Or return a default/error state
+            }
+            return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(numAmount);
+        }
+
+        // --- Calculations ---
+
+         function calculateTotalAssets() {
+            let total = 0;
+            for (const category in assets) {
+                assets[category].forEach(asset => {
+                    const amount = parseFloat(asset.amount);
+                    if (!isNaN(amount)) total += amount;
+                });
+            }
+            return total;
+        }
+
+        function calculateTotalFunds() {
+             // ** UPDATED: All fund categories (including creditCards now treated as positive) contribute positively **
+            let total = 0;
+            for (const category in funds) {
+                funds[category].forEach(fund => {
+                    const amount = parseFloat(fund.amount);
+                    if (!isNaN(amount)) {
+                        total += amount; // Add all fund types
+                    }
+                });
+            }
+            return total;
+        }
+
+         function calculateTotalLiquidFunds() {
+             // Calculates all fund categories as they are now all considered liquid/positive balance
+             // This function might become redundant if calculateTotalFunds serves the same purpose,
+             // but kept for potential future differentiation.
+             return calculateTotalFunds(); // For now, it's the same as total funds
+         }
+
+
+        function calculateNetWorth() {
+            const totalAssetsVal = calculateTotalAssets();
+            const totalFundsVal = calculateTotalFunds(); // Includes all fund types (now positive)
+            // Future: Add specific liabilities section if needed (e.g., loans)
+            const netWorthVal = totalAssetsVal + totalFundsVal;
+
+            if (netWorthDisplay) {
+                netWorthDisplay.textContent = formatCurrency(netWorthVal);
+            }
+            return netWorthVal;
+        }
+
+
+        function calculateSummary() {
+            let income = 0;
+            let expenses = 0;
+            const dateRangeValue = filterDateRange.value; // Apply date filter to summary too
+            const { startDate, endDate } = getDateRange(dateRangeValue);
+
+            transactions
+                .filter(tx => { // Filter transactions for summary based on date range
+                    if (dateRangeValue === 'all') return true;
+                    if (startDate || endDate) {
+                        const txDate = new Date(tx.date);
+                        if (isNaN(txDate.getTime())) return false;
+                        const isAfterStart = startDate ? txDate >= startDate : true;
+                        const isBeforeEnd = endDate ? txDate <= endDate : true;
+                        return isAfterStart && isBeforeEnd;
+                    }
+                    return false; // Should not happen if dateRangeValue !== 'all'
+                })
+                .forEach((transaction) => {
+                    const amount = parseFloat(transaction.amount);
+                    if (!isNaN(amount)) {
+                        if (transaction.type === 'income') {
+                            income += amount;
+                        } else if (transaction.type === 'expense') {
+                            expenses += amount;
+                        }
+                    }
+                });
+
+            const balance = income - expenses;
+
+            totalIncomeDisplay.textContent = formatCurrency(income);
+            totalExpensesDisplay.textContent = formatCurrency(expenses);
+            balanceDisplay.textContent = formatCurrency(balance);
+
+            // Update budget progress whenever summary changes
+            Object.keys(budgets).forEach(category => updateBudgetDisplay(category));
+        }
+
+
+        // --- Date Range Helper Function ---
+        function getDateRange(rangeValue) {
+            const now = new Date();
+            let startDate = new Date(now);
+            let endDate = new Date(now);
+
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(23, 59, 59, 999);
+
+            switch (rangeValue) {
+                case 'today':
+                    break; // Start and end date already set correctly
+                case 'this-week':
+                    const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ...
+                    const diff = startDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust to Monday
+                    startDate.setDate(diff);
+                    endDate = new Date(startDate);
+                    endDate.setDate(startDate.getDate() + 6); // Sunday
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+                case 'this-month':
+                    startDate.setDate(1);
+                    endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0); // Last day of current month
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+                case 'past-6-months':
+                    // Start date is beginning of 6 months ago, end date is today
+                    startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    // End date remains today
+                    break;
+                case 'past-year':
+                    // Start date is beginning of 1 year ago, end date is today
+                     startDate = new Date(now.getFullYear() - 1, now.getMonth(), 1);
+                     startDate.setHours(0, 0, 0, 0);
+                    // End date remains today
+                    break;
+                case 'older':
+                    // Everything *before* the start of the past year
+                    startDate = null; // No start date limit
+                    endDate = new Date(now.getFullYear() - 1, now.getMonth(), 1); // Start of 1 year ago
+                    endDate.setDate(endDate.getDate() - 1); // End of day before that
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+                case 'all':
+                default:
+                    startDate = null; // No limit
+                    endDate = null;   // No limit
+                    break;
+            }
+            // console.log(`Date Range (${rangeValue}):`, startDate, endDate); // Debugging
+            return { startDate, endDate };
+        }
+
+        // --- Rendering Functions ---
+
+        function renderTransactions() {
+            transactionList.innerHTML = ''; // Clear existing rows
+            let filteredTransactions = [...transactions];
+
+            // 1. Date Range Filtering
+            const dateRangeValue = filterDateRange.value;
+            if (dateRangeValue !== 'all') {
+                const { startDate, endDate } = getDateRange(dateRangeValue);
+                 if (startDate || endDate) { // Check if dates are valid for filtering
+                   filteredTransactions = filteredTransactions.filter(tx => {
+                       const txDate = new Date(tx.date);
+                       if (isNaN(txDate.getTime())) return false; // Skip invalid dates
+                       const isAfterStart = startDate ? txDate >= startDate : true;
+                       const isBeforeEnd = endDate ? txDate <= endDate : true;
+                       return isAfterStart && isBeforeEnd;
+                   });
+                }
+            }
+
+            // 2. Type Filtering
+             if (filterType.value !== 'all') {
+                filteredTransactions = filteredTransactions.filter(tx => tx.type === filterType.value);
+            }
+            // 3. Category Filtering
+            if (filterCategory.value !== 'all') {
+                filteredTransactions = filteredTransactions.filter(tx => tx.category === filterCategory.value);
+            }
+
+            // 4. Sorting
+            const sortByValue = sortBy.value;
+            filteredTransactions.sort((a, b) => {
+                const amountA = parseFloat(a.amount); const amountB = parseFloat(b.amount);
+                const dateA = new Date(a.date); const dateB = new Date(b.date);
+                // Handle potential invalid dates during sort
+                const validDateA = !isNaN(dateA.getTime());
+                const validDateB = !isNaN(dateB.getTime());
+
+                if (!validDateA && !validDateB) return 0;
+                if (!validDateA) return 1; // Push invalid dates to the end
+                if (!validDateB) return -1;
+
+                switch (sortByValue) {
+                    case 'date-newest': return dateB - dateA;
+                    case 'date-oldest': return dateA - dateB;
+                    case 'amount-high': return amountB - amountA;
+                    case 'amount-low': return amountA - amountB;
+                    default: return dateB - dateA; // Default to newest first
+                }
+            });
+
+            // 5. Displaying Rows or Empty State
+            if (filteredTransactions.length === 0) {
+                 transactionEmptyState.style.display = 'block'; // Show the dedicated empty state div
+                 return;
+            } else {
+                transactionEmptyState.style.display = 'none'; // Hide empty state
+            }
+
+            filteredTransactions.forEach((transaction) => {
+                const row = document.createElement('tr');
+                const amountClass = transaction.type === 'income' ? 'currency-positive' : 'currency-negative';
+                const descriptionDisplay = transaction.description ? transaction.description : '<span class="description-muted">No description</span>';
+                const uniqueIdentifier = transaction.id || `${transaction.date}-${transaction.type}-${transaction.amount}-${transaction.category}`; // Fallback ID
+                let displayDate = 'Invalid Date';
+                 const txDate = new Date(transaction.date);
+                 if (!isNaN(txDate.getTime())) {
+                    // Using Intl.DateTimeFormat for locale-aware formatting
+                     displayDate = new Intl.DateTimeFormat(navigator.language || 'en-US').format(txDate);
+                 }
+                 const categoryDisplay = transaction.category ? (transaction.category.charAt(0).toUpperCase() + transaction.category.slice(1)) : 'Uncategorized';
+
+                row.innerHTML = `
+                  <td>${displayDate}</td>
+                  <td>${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}</td>
+                  <td>${categoryDisplay}</td>
+                  <td class="${amountClass}">${formatCurrency(transaction.amount)}</td>
+                  <td>${descriptionDisplay}</td>
+                  <td><button class="delete-button delete-transaction" data-id="${uniqueIdentifier}" title="Delete Transaction"><i class="fa-solid fa-trash-alt"></i></button></td>
+                `;
+                transactionList.appendChild(row);
+            });
+        }
+
+         function updateChart() {
+             if (!chartCanvas) return;
+
+             const categoryExpenses = {};
+             let totalExpenseAmount = 0;
+             const dateRangeValue = filterDateRange.value; // Use same date range as list/summary
+             const { startDate, endDate } = getDateRange(dateRangeValue);
+
+             transactions
+                 .filter(t => {
+                     if (t.type !== 'expense') return false;
+                     // Apply date filter to chart data
+                     if (dateRangeValue !== 'all' && (startDate || endDate)) {
+                         const txDate = new Date(t.date);
+                         if (isNaN(txDate.getTime())) return false;
+                         const isAfterStart = startDate ? txDate >= startDate : true;
+                         const isBeforeEnd = endDate ? txDate <= endDate : true;
+                         return isAfterStart && isBeforeEnd;
+                     }
+                     return true; // If 'all' time selected
+                 })
+                 .forEach(transaction => {
+                     const amount = parseFloat(transaction.amount);
+                     if (!isNaN(amount) && transaction.category) {
+                         categoryExpenses[transaction.category] = (categoryExpenses[transaction.category] || 0) + amount;
+                         totalExpenseAmount += amount;
+                     }
+             });
+
+             const labels = Object.keys(categoryExpenses).map(cat => cat.charAt(0).toUpperCase() + cat.slice(1));
+             const data = Object.values(categoryExpenses);
+
+             const hasData = labels.length > 0 && data.some(val => val > 0);
+             if (chartPlaceholder) chartPlaceholder.style.display = hasData ? 'none' : 'flex';
+
+             if (spendingChart) {
+                 spendingChart.destroy(); // Destroy previous instance before creating new
+             }
+
+             if (!hasData) {
+                 spendingChart = undefined; // Ensure chart variable is cleared
+                 return;
+             }
+
+             // Resolve CSS variables for colors *inside* the function call
+             // to ensure they are current if the theme changes dynamically
+             const chartColors = [
+                  'var(--chart-color-1)', 'var(--chart-color-2)', 'var(--chart-color-3)',
+                  'var(--chart-color-4)', 'var(--chart-color-5)', 'var(--chart-color-6)',
+                  'var(--chart-color-7)', 'var(--chart-color-8)'
+              ];
+             const resolvedColors = chartColors.map(colorVar =>
+                 getComputedStyle(document.documentElement).getPropertyValue(colorVar.match(/--[\w-]+/)[0]).trim()
+             );
+             const resolvedBorderColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-card').trim();
+             const resolvedLabelColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
+
+             spendingChart = new Chart(chartCanvas, {
+                 type: 'doughnut',
+                 data: {
+                     labels: labels,
+                     datasets: [{
+                         label: 'Expenses by Category',
+                         data: data,
+                         backgroundColor: resolvedColors,
+                          borderColor: resolvedBorderColor,
+                          borderWidth: 3,
+                          hoverOffset: 8
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                      cutout: '70%',
+                     plugins: {
+                          legend: {
+                             position: 'bottom',
+                             labels: {
+                                 color: resolvedLabelColor,
+                                 padding: 15,
+                                 font: { size: 13 }
+                             }
+                         },
+                          tooltip: {
+                              enabled: true,
+                              backgroundColor: 'rgba(0,0,0,0.7)',
+                              titleColor: '#fff',
+                              bodyColor: '#fff',
+                              padding: 10,
+                              cornerRadius: 4,
+                              callbacks: {
+                                 label: function(context) {
+                                     let label = context.label || '';
+                                     let value = context.parsed || 0;
+                                     // Calculate percentage based on the *filtered* total for the chart
+                                     let chartTotal = context.dataset.data.reduce((a, b) => a + b, 0);
+                                     let percentage = chartTotal > 0 ? ((value / chartTotal) * 100).toFixed(1) : 0;
+                                     return `${label}: ${formatCurrency(value)} (${percentage}%)`;
+                                 }
+                             }
+                         },
+                         // Optional: Datalabels plugin configuration
+                         // datalabels: {
+                         //     formatter: (value, ctx) => {
+                         //         let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                         //         let percentage = (value * 100 / sum).toFixed(1) + "%";
+                         //         return percentage;
+                         //     },
+                         //     color: '#fff',
+                         //     anchor: 'end',
+                         //     align: 'start',
+                         //     offset: 10
+                         // }
+                     },
+                     animation: {
+                         duration: 500 // Add a subtle animation
+                     }
+                 },
+                 // plugins: [ChartDataLabels] // Register plugin if using datalabels
+             });
+         }
+
+        // --- Transaction Add/Delete ---
+
+        // Helper to clear form fields, keeping some optionally
+         function clearTransactionForm(formElement, keepDate = true, keepCategory = true) {
+             const dateInput = formElement.querySelector('input[type="date"]');
+             const categorySelect = formElement.querySelector('select[id$="-category"]'); // Matches income/expense category
+             const amountInput = formElement.querySelector('input[type="number"]');
+             const descriptionTextarea = formElement.querySelector('textarea');
+             const recurringSelect = formElement.querySelector('select[id$="-recurring"]');
+
+             if (!keepDate && dateInput) dateInput.value = '';
+             if (!keepCategory && categorySelect) categorySelect.selectedIndex = 0; // Reset to default placeholder
+             if (amountInput) amountInput.value = '';
+             if (descriptionTextarea) descriptionTextarea.value = '';
+             if (recurringSelect) recurringSelect.value = 'none'; // Reset recurring
+
+             // Set focus back to amount for quick entry
+             if (amountInput) amountInput.focus();
+         }
+
+        function addTransaction(type, date, category, amount, description, recurring) {
+             if (!date) {
+                 alert('Please select a date.'); return false;
+             }
+             if (!category) {
+                  alert('Please select a category.'); return false;
+             }
+             const parsedAmount = parseFloat(amount);
+             if (isNaN(parsedAmount) || parsedAmount <= 0) {
+                 alert('Please enter a valid positive amount.'); return false;
+             }
+
+             const newTransaction = {
+                 id: `tx_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+                 type, date, category,
+                 amount: parsedAmount,
+                 description: description || '',
+                 recurring: recurring || 'none',
+                 // Store lastAdded only if it IS recurring, for processing later
+                 lastAdded: (recurring && recurring !== 'none') ? new Date(date).toISOString() : null,
+             };
+            transactions.unshift(newTransaction); // Add to beginning
+            saveData();
+            refreshUI(); // Update everything after adding
+            return true; // Indicate success
+        }
+
+        function deleteTransaction(idToDelete) {
+             const transactionIndex = transactions.findIndex(t =>
+                 t.id === idToDelete ||
+                 // Fallback for older items without unique ID (less reliable)
+                 (t.id === undefined && `${t.date}-${t.type}-${t.amount}-${t.category}` === idToDelete)
+             );
+
+            if (transactionIndex > -1) {
+                 const txType = transactions[transactionIndex].type;
+                 const txDesc = transactions[transactionIndex].description || transactions[transactionIndex].category;
+                 const txAmount = formatCurrency(transactions[transactionIndex].amount);
+                 if (confirm(`Delete ${txType} transaction?\n(${txDesc} - ${txAmount})`)) {
+                     transactions.splice(transactionIndex, 1);
+                     saveData();
+                     refreshUI();
+                 }
+             } else {
+                 console.warn("Could not find transaction to delete with ID:", idToDelete);
+                 alert("Error: Could not find the specified transaction to delete.");
+             }
+        }
+
+
+        // --- Funds, Goals, Assets, Budget Functions ---
+
+        function renderItemList(category, items, listElement, deleteClass, itemType) {
+             listElement.innerHTML = ''; // Clear list
+             if (items && items.length > 0) {
+                 items.forEach((item, index) => {
+                     const li = document.createElement('li');
+                     // ** UPDATED: No special formatting for credit cards anymore, treat all funds positively **
+                     const displayAmount = formatCurrency(item.amount);
+                     // Add positive class if needed for styling (optional)
+                     const amountClass = parseFloat(item.amount) > 0 ? 'currency-positive' : '';
+
+                      li.innerHTML = `
+                        <span>${item.name}</span>
+                        <span class="${amountClass}">${displayAmount}</span>
+                        <button class="delete-button ${deleteClass}" data-category="${category}" data-index="${index}" title="Delete ${itemType}">
+                            <i class="fa-solid fa-times-circle"></i>
+                        </button>
+                    `;
+                    listElement.appendChild(li);
+                 });
+             } else {
+                 listElement.innerHTML = `<li class="item-list-empty">No ${itemType} added yet.</li>`;
+             }
+        }
+
+        function updateFundsDisplay() {
+            // Render existing lists
+            renderItemList('cash', funds.cash, cashListUl, 'delete-fund', 'Cash Item');
+            renderItemList('checking', funds.checking, checkingListUl, 'delete-fund', 'Checking Account');
+            renderItemList('savings', funds.savings, savingsListUl, 'delete-fund', 'Savings Account');
+            renderItemList('investments', funds.investments, investmentListUl, 'delete-fund', 'Investment');
+            renderItemList('creditCards', funds.creditCards, creditCardListUl, 'delete-fund', 'Credit Card'); // Still render
+            renderItemList('crypto', funds.crypto, cryptoListUl, 'delete-fund', 'Crypto Holding');
+
+            // Calculate totals using the updated functions
+            const totalNetFunds = calculateTotalFunds(); // Now represents total positive funds
+            const formattedNetTotal = formatCurrency(totalNetFunds);
+
+            // Update both displays (they now show the same value)
+            if (fundsTotalDisplay) fundsTotalDisplay.textContent = formattedNetTotal;
+            if (totalFundsDisplay) totalFundsDisplay.textContent = formattedNetTotal;
+
+             calculateNetWorth(); // Recalculate net worth based on updated funds
+        }
+
+        function addFund(category, name, amount) {
+             const parsedAmount = parseFloat(amount);
+             if (!name || isNaN(parsedAmount) || parsedAmount < 0) {
+                 alert(`Please enter a valid name and non-negative amount for ${category}.`);
+                 return false;
+             }
+            if (!funds[category]) funds[category] = [];
+            funds[category].push({ name, amount: parsedAmount });
+            saveData();
+            updateFundsDisplay();
+            renderGoals(); // Update goals progress based on new fund total
+            return true;
+        }
+
+        function deleteFund(category, index) {
+            if (funds[category]?.[index]) {
+                 const fundName = funds[category][index].name;
+                 if (confirm(`Delete fund "${fundName}"?`)) {
+                    funds[category].splice(index, 1);
+                    saveData();
+                    updateFundsDisplay();
+                    renderGoals();
+                 }
+            }
+        }
+
+        function addGoal(name, amount, dueDate) {
+             const targetAmount = parseFloat(amount);
+             if (!name || isNaN(targetAmount) || targetAmount <= 0) {
+                 alert('Please enter a valid goal name and a positive target amount.');
+                 return false;
+             }
+             // Ensure dueDate is stored as YYYY-MM-DD or null
+             let formattedDueDate = null;
+             if (dueDate) {
+                 try {
+                     formattedDueDate = new Date(dueDate).toISOString().split('T')[0];
+                 } catch (e) { console.error("Invalid due date format:", dueDate); }
+             }
+
+             goals.push({
+                 id: `goal_${Date.now()}`, name, amount: targetAmount,
+                 dueDate: formattedDueDate,
+             });
+            saveData();
+            renderGoals();
+            return true;
+        }
+
+        function calculateGoalProgress(goalAmount) {
+            // Use TOTAL funds for goal progress now that all are treated as positive balances
+            const totalCurrentFunds = calculateTotalFunds();
+            const progress = goalAmount > 0 ? (totalCurrentFunds / goalAmount) * 100 : 0;
+            return Math.min(progress, 100); // Cap at 100%
+        }
+
+         function renderGoals() {
+            goalsList.innerHTML = '';
+            const totalCurrentFunds = calculateTotalFunds(); // Use total funds
+
+             if (goals.length === 0) {
+                 // Use the dedicated empty state structure
+                 goalsList.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">
+                                          <i class="fas fa-flag-checkered"></i>
+                                          <p>No goals set yet. Create your first goal above!</p>
+                                      </div>`;
+                 return;
+             }
+             // Sort goals: by due date (earliest first), then by name for those without dates
+             goals.sort((a, b) => {
+                 const dateA = a.dueDate ? new Date(a.dueDate) : null;
+                 const dateB = b.dueDate ? new Date(b.dueDate) : null;
+                 if (dateA && dateB) return dateA - dateB;
+                 if (dateA) return -1; // Goals with dates come first
+                 if (dateB) return 1;
+                 return a.name.localeCompare(b.name); // Sort undated goals alphabetically
+             });
+
+            goals.forEach((goal, index) => {
+                const progressPercent = calculateGoalProgress(goal.amount);
+                const goalItem = document.createElement('div');
+                goalItem.classList.add('goal-item');
+
+                 let dueDateString = 'No target date';
+                 let monthlySavingsString = '';
+                 let timeRemainingString = '';
+                 const amountNeeded = Math.max(0, goal.amount - totalCurrentFunds);
+
+                 if (goal.dueDate) {
+                    const dueDate = new Date(goal.dueDate);
+                     // Adjust dueDate to account for timezone offset to avoid off-by-one day issues
+                     dueDate.setMinutes(dueDate.getMinutes() + dueDate.getTimezoneOffset());
+                    const now = new Date();
+                     now.setHours(0, 0, 0, 0);
+
+                    if (!isNaN(dueDate) && dueDate >= now) {
+                        dueDateString = `Target Date: ${new Intl.DateTimeFormat().format(dueDate)}`;
+                        // Calculate months left more accurately
+                         let monthsLeft = (dueDate.getFullYear() - now.getFullYear()) * 12 + dueDate.getMonth() - now.getMonth();
+                         if (dueDate.getDate() < now.getDate() && monthsLeft > 0) {
+                              monthsLeft--; // Decrement if the day in the target month hasn't passed yet
+                         }
+                         monthsLeft = Math.max(0, monthsLeft); // Ensure monthsLeft isn't negative
+
+
+                         if (amountNeeded > 0 && monthsLeft > 0) {
+                             const monthlySavingsNeeded = amountNeeded / monthsLeft;
+                             monthlySavingsString = `Est. ${formatCurrency(monthlySavingsNeeded)}/month needed`;
+                              const years = Math.floor(monthsLeft / 12);
+                             const months = monthsLeft % 12;
+                             timeRemainingString = `(${years > 0 ? `${years}y ` : ''}${months > 0 ? `${months}m` : ''} left)`;
+                         } else if (amountNeeded > 0 && monthsLeft === 0) { // Due this month
+                             monthlySavingsString = `Save ${formatCurrency(amountNeeded)} this month`;
+                             timeRemainingString = '(Due soon)';
+                         } else if (amountNeeded <= 0) {
+                             monthlySavingsString = '<i class="fas fa-check-circle" style="color: var(--accent-secondary);"></i> Target reached!';
+                         }
+                    } else if (!isNaN(dueDate)) { // Past due date
+                        dueDateString = `Target Date: ${new Intl.DateTimeFormat().format(dueDate)} (Past)`;
+                        if(amountNeeded > 0) {
+                            monthlySavingsString = `Missed target by ${formatCurrency(amountNeeded)}`;
+                        } else {
+                            monthlySavingsString = '<i class="fas fa-check-circle" style="color: var(--accent-secondary);"></i> Reached after due date';
+                        }
+                    }
+                } else { // No due date
+                    if(amountNeeded > 0) {
+                        monthlySavingsString = `Save ${formatCurrency(amountNeeded)} more`;
+                    } else {
+                         monthlySavingsString = '<i class="fas fa-check-circle" style="color: var(--accent-secondary);"></i> Target reached!';
+                    }
+                }
+
+                goalItem.innerHTML = `
+                    <div class="goal-info">
+                        <p><strong>${goal.name}</strong></p>
+                        <p>Target: ${formatCurrency(goal.amount)} | Saved: ${formatCurrency(Math.min(totalCurrentFunds, goal.amount))}</p>
+                        <p>${dueDateString} ${timeRemainingString}</p>
+                        <p class="monthly-savings">${monthlySavingsString}</p>
+                         <div class="progress-bar-container">
+                            <span class="progress-label">Progress: ${progressPercent.toFixed(1)}%</span>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: ${progressPercent}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="goal-actions">
+                        <button class="btn delete-goal" data-index="${index}" title="Delete Goal"><i class="fas fa-trash-alt"></i> Delete</button>
+                    </div>
+                `;
+                goalsList.appendChild(goalItem);
+            });
+        }
+
+        function deleteGoal(index) {
+             if (goals[index]) {
+                 const goalName = goals[index].name;
+                 if (confirm(`Delete goal "${goalName}"?`)) {
+                    goals.splice(index, 1);
+                    saveData();
+                    renderGoals();
+                 }
+             }
+        }
+
+        function updateAssetsDisplay() {
+            // Render existing lists
+            renderItemList('realEstate', assets.realEstate, realEstateListUl, 'delete-asset', 'Real Estate');
+            renderItemList('vehicles', assets.vehicles, vehicleListUl, 'delete-asset', 'Vehicle');
+            renderItemList('luxuries', assets.luxuries, luxuryListUl, 'delete-asset', 'Luxury Item');
+            renderItemList('other', assets.other, otherAssetListUl, 'delete-asset', 'Other Asset');
+            renderItemList('electronics', assets.electronics, electronicsListUl, 'delete-asset', 'Electronics');
+            renderItemList('furniture', assets.furniture, furnitureListUl, 'delete-asset', 'Furniture');
+
+             // ** NEW ** Update Assets Summary Display
+             const totalAssetsVal = calculateTotalAssets();
+             if (assetsTotalDisplay) {
+                 assetsTotalDisplay.textContent = formatCurrency(totalAssetsVal);
+             }
+
+             calculateNetWorth(); // Recalculate net worth based on updated assets
+        }
+
+        function addAsset(category, name, amount) {
+            const parsedAmount = parseFloat(amount);
+             if (!name || isNaN(parsedAmount) || parsedAmount < 0) {
+                 alert(`Please enter a valid name and non-negative value for the ${category} asset.`);
+                 return false;
+             }
+            if (!assets[category]) assets[category] = [];
+            assets[category].push({ name, amount: parsedAmount });
+            saveData();
+            updateAssetsDisplay(); // This now updates summary too
+             return true;
+        }
+
+        function deleteAsset(category, index) {
+             if (assets[category]?.[index]) {
+                 const assetName = assets[category][index].name;
+                 if (confirm(`Delete asset "${assetName}"?`)) {
+                    assets[category].splice(index, 1);
+                    saveData();
+                    updateAssetsDisplay();
+                 }
+             }
+        }
+
+        function addBudget(category, amount) {
+            const budgetAmount = parseFloat(amount);
+            if (isNaN(budgetAmount) || budgetAmount < 0) {
+                 alert('Please enter a valid, non-negative budget amount.');
+                 return false;
+            }
+            budgets[category] = budgetAmount;
+            saveData();
+            updateBudgetDisplay(category); // Update display for the specific category
+            return true;
+        }
+
+        function updateBudgetDisplay(category) {
+            const budgetAmount = budgets[category] || 0;
+            const progressBar = document.getElementById(`${category}-progress`);
+            const budgetStatus = document.getElementById(`${category}-budget-status`);
+            const budgetInput = document.getElementById(`${category}-budget`);
+
+             // Pre-fill input only if it's not currently focused
+             if (budgetInput && budgetAmount > 0 && document.activeElement !== budgetInput) {
+                 budgetInput.value = budgetAmount.toFixed(2);
+             } else if (budgetInput && budgetAmount <= 0 && document.activeElement !== budgetInput) {
+                  // Clear input if budget is 0 or not set
+                  budgetInput.placeholder = 'Monthly Budget (€)';
+                  budgetInput.value = '';
+             }
+
+             if (!progressBar || !budgetStatus) {
+                 // console.warn(`Budget display elements not found for category: ${category}`);
+                 return;
+             }
+
+             // Calculate expenses for THIS MONTH only for the given category
+             let totalExpenses = 0;
+             const now = new Date();
+             const currentMonth = now.getMonth();
+             const currentYear = now.getFullYear();
+
+             transactions.forEach(transaction => {
+                 const transactionDate = new Date(transaction.date);
+                 if (!isNaN(transactionDate.getTime()) &&
+                     transaction.type === 'expense' &&
+                     transaction.category === category &&
+                     transactionDate.getMonth() === currentMonth &&
+                     transactionDate.getFullYear() === currentYear) {
+                     const amount = parseFloat(transaction.amount);
+                     if (!isNaN(amount)) {
+                         totalExpenses += amount;
+                     }
+                 }
+             });
+
+             const progress = budgetAmount > 0 ? (totalExpenses / budgetAmount) * 100 : 0;
+             // Cap visual progress at 100%, but calculate actual over/under
+             const cappedProgress = Math.min(progress, 100);
+             const isOverBudget = budgetAmount > 0 && totalExpenses > budgetAmount;
+
+             progressBar.style.width = `${cappedProgress}%`;
+             progressBar.classList.toggle('over-budget', isOverBudget);
+
+             let statusText = `Budget: ${formatCurrency(budgetAmount)} | Spent: ${formatCurrency(totalExpenses)}`;
+             if (budgetAmount > 0) {
+                 const remaining = budgetAmount - totalExpenses;
+                 statusText += ` | <span style="color: ${remaining < 0 ? 'var(--accent-danger)' : 'var(--accent-secondary)'};">${remaining < 0 ? 'Over:' : 'Left:'} ${formatCurrency(Math.abs(remaining))}</span>`;
+             } else {
+                 statusText += ` | <span>No budget set</span>`;
+             }
+             budgetStatus.innerHTML = statusText;
+        }
+
+         function handleRecurringTransactions() {
+             const now = new Date();
+             now.setHours(0, 0, 0, 0); // Compare dates only
+             let changed = false;
+             let transactionsToAdd = [];
+
+             transactions.forEach((transaction, index) => {
+                 // Process only original recurring transactions (check recurring flag and lastAdded)
+                 if (transaction.recurring && transaction.recurring !== 'none' && transaction.lastAdded) {
+                     let lastAddedDate;
+                     try {
+                        lastAddedDate = new Date(transaction.lastAdded);
+                         if (isNaN(lastAddedDate.getTime())) throw new Error("Invalid date");
+                         lastAddedDate.setHours(0, 0, 0, 0);
+                     } catch (e) {
+                         console.error(`Invalid lastAdded date for recurring transaction ID ${transaction.id}: ${transaction.lastAdded}. Skipping.`);
+                         return; // Skip this transaction if date is invalid
+                     }
+
+                     let nextDueDate = new Date(lastAddedDate);
+
+                      // Calculate the *next* potential due date based on the *last added* date
+                      let dateIncremented = false;
+                      switch (transaction.recurring) {
+                         case 'daily': nextDueDate.setDate(nextDueDate.getDate() + 1); dateIncremented = true; break;
+                         case 'weekly': nextDueDate.setDate(nextDueDate.getDate() + 7); dateIncremented = true; break;
+                         case 'monthly': nextDueDate.setMonth(nextDueDate.getMonth() + 1); dateIncremented = true; break;
+                         case 'yearly': nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); dateIncremented = true; break;
+                     }
+
+                     // Add transactions for all missed periods up to (and including) today
+                     while (dateIncremented && nextDueDate <= now) {
+                          const nextDueDateString = nextDueDate.toISOString().split('T')[0];
+                          // Create a *new* transaction based on the recurring one
+                          transactionsToAdd.push({
+                                type: transaction.type,
+                                date: nextDueDateString,
+                                category: transaction.category,
+                                amount: transaction.amount,
+                                description: `${transaction.description || transaction.category} (Recurring)`,
+                                recurring: 'none', // The generated transaction is not itself recurring
+                                lastAdded: null, // Generated transactions don't have this
+                                id: `tx_${Date.now()}_${Math.random().toString(16).slice(2)}_${index}_${nextDueDateString}`, // More unique ID
+                                recurringSourceId: transaction.id // Link back to original for reference (optional)
+                            });
+
+                          // IMPORTANT: Update the lastAdded date on the *original* recurring transaction
+                          transaction.lastAdded = nextDueDate.toISOString();
+                          changed = true;
+
+                          // Calculate the *next* potential due date for the loop
+                          switch (transaction.recurring) {
+                                case 'daily': nextDueDate.setDate(nextDueDate.getDate() + 1); break;
+                                case 'weekly': nextDueDate.setDate(nextDueDate.getDate() + 7); break;
+                                case 'monthly': nextDueDate.setMonth(nextDueDate.getMonth() + 1); break;
+                                case 'yearly': nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); break;
+                                default: dateIncremented = false; break; // Should not happen, but safety break
+                          }
+                     }
+                 }
+             });
+
+              if (transactionsToAdd.length > 0) {
+                  transactions.unshift(...transactionsToAdd); // Add all new ones at the beginning
+                  // Optional: Re-sort transactions by date after adding recurring ones
+                  transactions.sort((a, b) => {
+                      const dateA = new Date(a.date); const dateB = new Date(b.date);
+                      if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+                      if (isNaN(dateA.getTime())) return 1;
+                      if (isNaN(dateB.getTime())) return -1;
+                      return dateB - dateA; // Sort newest first
+                  });
+                  console.log(`${transactionsToAdd.length} recurring transactions added.`);
+              }
+
+             // Save data only if the original recurring transactions were updated
+             if (changed) {
+                 saveData();
+                 refreshUI(); // Refresh UI needed only if changes were made
+             }
+         }
+
+
+        // --- UI Navigation & Initialization ---
+        function showSubmenu(targetId) {
+             // Default to dashboard if targetId is invalid or missing
+             const validTargetId = ['dashboard', 'goals', 'funds', 'assets', 'budget'].includes(targetId) ? targetId : 'dashboard';
+
+            submenuContents.forEach(content => {
+                content.classList.toggle('active', content.id === validTargetId);
+            });
+             sidebarListItems.forEach(li => {
+                 const link = li.querySelector('a');
+                 if (link && link.getAttribute('href') === `#${validTargetId}`) {
+                     li.classList.add('active');
+                 } else {
+                     li.classList.remove('active');
+                 }
+             });
+             // Update URL hash (optional, good for bookmarking/linking)
+             // history.pushState(null, null, `#${validTargetId}`);
+        }
+
+        function populateCategoryFilter() {
+             const incomeCategories = new Set();
+             const expenseCategories = new Set();
+             const allCategories = new Set();
+
+             // Get categories from hardcoded form dropdowns (initial list)
+             incomeForm.querySelectorAll('select[id="income-category"] option').forEach(opt => { if (opt.value) { incomeCategories.add(opt.value); allCategories.add(opt.value); } });
+             expenseForm.querySelectorAll('select[id="expense-category"] option').forEach(opt => { if (opt.value) { expenseCategories.add(opt.value); allCategories.add(opt.value); } });
+
+             // Get categories from existing transactions (adds user-entered ones if any mismatch)
+             transactions.forEach(t => {
+                 if (t.category) {
+                     allCategories.add(t.category); // Add to the master set
+                    // Optionally keep track of type-specific categories if needed elsewhere
+                    // if (t.type === 'income') incomeCategories.add(t.category);
+                    // else if (t.type === 'expense') expenseCategories.add(t.category);
+                 }
+             });
+
+             // Sort and populate filter dropdown
+             const sortedCategories = [...allCategories].sort((a, b) => a.localeCompare(b));
+             const currentFilterValue = filterCategory.value; // Preserve selection
+
+            filterCategory.innerHTML = '<option value="all">All Categories</option>';
+            sortedCategories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                // Capitalize first letter for display
+                 option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+                filterCategory.appendChild(option);
+            });
+
+            // Restore selection if the category still exists
+             if (sortedCategories.includes(currentFilterValue)) {
+                 filterCategory.value = currentFilterValue;
+             } else {
+                 filterCategory.value = 'all'; // Default back to 'all' if previous selection is gone
+             }
+        }
+
+        function refreshUI() {
+            // console.time("refreshUI"); // Optional performance timing
+            calculateNetWorth(); // Recalculates assets + funds
+            updateFundsDisplay(); // Recalculates funds, updates display
+            updateAssetsDisplay(); // Recalculates assets, updates display
+            calculateSummary(); // Recalculates income/expense/balance based on filters, updates budget displays
+            renderGoals(); // Recalculates progress, updates display
+            renderTransactions(); // Renders list based on current filters/sort
+            updateChart(); // Updates chart based on current filters
+            populateCategoryFilter(); // Updates category filter options based on all known categories
+            // console.timeEnd("refreshUI");
+        }
+
+        // --- Event Listeners ---
+
+        // Sidebar Navigation
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                const targetId = link.getAttribute('href').substring(1);
+                showSubmenu(targetId);
+                 const mainContentArea = document.querySelector('.main-content');
+                 if (mainContentArea) mainContentArea.scrollTop = 0; // Scroll to top
+            });
+        });
+
+        // Transaction Filtering/Sorting
+        filterDateRange.addEventListener('change', refreshUI); // Full refresh needed
+        filterType.addEventListener('change', refreshUI); // Full refresh needed
+        filterCategory.addEventListener('change', refreshUI); // Full refresh needed
+        sortBy.addEventListener('change', renderTransactions); // Only list needs re-rendering
+
+        // Modal Event Listeners
+        function openModal(modalElement) {
+            if(modalElement) {
+                modalElement.classList.add('visible');
+                 // Set default date to today and focus amount field
+                const dateInput = modalElement.querySelector('input[type="date"]');
+                if (dateInput && !dateInput.value) { // Set only if empty
+                    dateInput.valueAsDate = new Date();
+                }
+                 modalElement.querySelector('input[type="number"]')?.focus();
+            }
+        }
+        function closeModal(modalElement) {
+            if(modalElement) {
+                 modalElement.classList.remove('visible');
+                 // Optional: Clear form on close? Decided against it for now.
+                 // clearTransactionForm(modalElement.querySelector('form'), false, false);
+            }
+        }
+
+        showIncomeBtn.addEventListener('click', () => openModal(incomeModal));
+        showExpenseBtn.addEventListener('click', () => openModal(expenseModal));
+
+        closeButtons.forEach(btn => {
+             btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay')));
+        });
+
+        modalOverlays.forEach(overlay => {
+            overlay.addEventListener('click', (event) => {
+                // Close only if clicking the overlay itself, not the content
+                if (event.target === overlay) {
+                    closeModal(overlay);
+                }
+            });
+        });
+
+         // Close modal on Escape key
+         document.addEventListener('keydown', (event) => {
+             if (event.key === 'Escape') {
+                 const visibleModal = document.querySelector('.modal-overlay.visible');
+                 if (visibleModal) {
+                     closeModal(visibleModal);
+                 }
+             }
+         });
+
+        // Add Income/Expense Forms (Submit Buttons)
+        incomeForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            if (addTransaction(
+                'income',
+                document.getElementById('income-date').value,
+                document.getElementById('income-category').value,
+                document.getElementById('income-amount').value,
+                document.getElementById('income-description').value,
+                document.getElementById('income-recurring').value
+            )) {
+                closeModal(incomeModal); // Close modal on successful submission
+                // Don't clear form here, modal closing handles it or user uses 'continue'
+             }
+        });
+
+        expenseForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            if (addTransaction(
+                'expense',
+                document.getElementById('expense-date').value,
+                document.getElementById('expense-category').value,
+                document.getElementById('expense-amount').value,
+                document.getElementById('expense-description').value,
+                document.getElementById('expense-recurring').value
+            )) {
+                 closeModal(expenseModal); // Close modal on successful submission
+             }
+        });
+
+        // ** NEW ** Add Income/Expense Forms (Continue Buttons)
+        addIncomeContinueBtn.addEventListener('click', () => {
+             if (addTransaction(
+                'income',
+                document.getElementById('income-date').value,
+                document.getElementById('income-category').value,
+                document.getElementById('income-amount').value,
+                document.getElementById('income-description').value,
+                document.getElementById('income-recurring').value
+             )) {
+                // Clear only amount and description, keep date/category
+                clearTransactionForm(incomeForm, true, true);
+             }
+         });
+
+        addExpenseContinueBtn.addEventListener('click', () => {
+             if (addTransaction(
+                'expense',
+                document.getElementById('expense-date').value,
+                document.getElementById('expense-category').value,
+                document.getElementById('expense-amount').value,
+                document.getElementById('expense-description').value,
+                document.getElementById('expense-recurring').value
+             )) {
+                // Clear only amount and description, keep date/category
+                clearTransactionForm(expenseForm, true, true);
+             }
+         });
+
+
+        // Delete Transaction (using event delegation)
+        transactionList.addEventListener('click', (event) => {
+            const deleteButton = event.target.closest('.delete-transaction');
+             if (deleteButton) {
+                 const idToDelete = deleteButton.dataset.id;
+                 if (idToDelete) {
+                    deleteTransaction(idToDelete);
+                 } else {
+                     console.error("Delete button clicked, but no data-id found.");
+                 }
+            }
+        });
+
+        // --- Add/Delete Funds, Goals, Assets, Budget Listeners ---
+
+         // Use event delegation for fund deletion
+         fundsFormsContainer.addEventListener('click', (event) => {
+            const deleteButton = event.target.closest('.delete-fund');
+            if (deleteButton) {
+                 const category = deleteButton.dataset.category;
+                 const index = parseInt(deleteButton.dataset.index, 10);
+                if (category && !isNaN(index)) { deleteFund(category, index); }
+            }
+        });
+        // Add Fund Forms
+        addCashForm.addEventListener('submit', e => { e.preventDefault(); if(addFund('cash', e.target.elements['cash-name'].value, e.target.elements['cash-amount'].value)) e.target.reset(); });
+        addCheckingForm.addEventListener('submit', e => { e.preventDefault(); if(addFund('checking', e.target.elements['checking-name'].value, e.target.elements['checking-amount'].value)) e.target.reset(); });
+        addSavingsForm.addEventListener('submit', e => { e.preventDefault(); if(addFund('savings', e.target.elements['savings-name'].value, e.target.elements['savings-amount'].value)) e.target.reset(); });
+        addInvestmentsForm.addEventListener('submit', e => { e.preventDefault(); if(addFund('investments', e.target.elements['investment-name'].value, e.target.elements['investment-amount'].value)) e.target.reset(); });
+        addCreditCardForm.addEventListener('submit', e => { e.preventDefault(); if(addFund('creditCards', e.target.elements['credit-card-name'].value, e.target.elements['credit-card-amount'].value)) e.target.reset(); });
+        addCryptoForm.addEventListener('submit', e => { e.preventDefault(); if(addFund('crypto', e.target.elements['crypto-name'].value, e.target.elements['crypto-amount'].value)) e.target.reset(); });
+
+        // Add Goal Form
+        addGoalForm.addEventListener('submit', (event) => { event.preventDefault(); if (addGoal(document.getElementById('goal-name').value, document.getElementById('goal-amount').value, document.getElementById('goal-due-date').value )) { addGoalForm.reset(); } });
+        // Delete Goal (using event delegation)
+        goalsList.addEventListener('click', (event) => { const deleteButton = event.target.closest('.delete-goal'); if (deleteButton) { const index = parseInt(deleteButton.dataset.index, 10); if (!isNaN(index)) { deleteGoal(index); } } });
+
+        // Delete Asset (using event delegation)
+        assetsContainer.addEventListener('click', (event) => { const deleteButton = event.target.closest('.delete-asset'); if (deleteButton) { const category = deleteButton.dataset.category; const index = parseInt(deleteButton.dataset.index, 10); if (category && !isNaN(index)) { deleteAsset(category, index); } } });
+        // Add Asset Forms
+        addRealEstateForm.addEventListener('submit', e => { e.preventDefault(); if(addAsset('realEstate', e.target.elements['real-estate-name'].value, e.target.elements['real-estate-value'].value)) e.target.reset(); });
+        addVehicleForm.addEventListener('submit', e => { e.preventDefault(); if(addAsset('vehicles', e.target.elements['vehicle-name'].value, e.target.elements['vehicle-value'].value)) e.target.reset(); });
+        addLuxuryForm.addEventListener('submit', e => { e.preventDefault(); if(addAsset('luxuries', e.target.elements['luxury-name'].value, e.target.elements['luxury-value'].value)) e.target.reset(); });
+        addOtherAssetForm.addEventListener('submit', e => { e.preventDefault(); if(addAsset('other', e.target.elements['other-asset-name'].value, e.target.elements['other-asset-value'].value)) e.target.reset(); });
+        addElectronicsForm.addEventListener('submit', e => { e.preventDefault(); if(addAsset('electronics', e.target.elements['electronics-name'].value, e.target.elements['electronics-value'].value)) e.target.reset(); });
+        addFurnitureForm.addEventListener('submit', e => { e.preventDefault(); if(addAsset('furniture', e.target.elements['furniture-name'].value, e.target.elements['furniture-value'].value)) e.target.reset(); });
+
+        // Set Budget (using event delegation)
+        budgetCategoriesContainer.addEventListener('click', (event) => {
+             if (event.target.classList.contains('add-budget-btn')) {
+                 const category = event.target.dataset.category;
+                 const budgetInput = event.target.closest('.budget-input-group')?.querySelector('input[type="number"]');
+                 if (budgetInput && category) {
+                     addBudget(category, budgetInput.value);
+                     // budgetInput.value = ''; // Keep the value displayed after setting
+                     budgetInput.blur(); // Remove focus after setting
+                 }
+             }
+         });
+         // Optional: Update budget on input change after a delay (debouncing could be added)
+         // budgetCategoriesContainer.addEventListener('input', (event) => {
+         //     if (event.target.matches('input[type="number"][id$="-budget"]')) {
+         //         const category = event.target.id.replace('-budget', '');
+         //         const button = event.target.closest('.budget-input-group')?.querySelector('.add-budget-btn');
+         //         if (category && button) {
+         //             // Simple update on input - consider debouncing for better performance
+         //              addBudget(category, event.target.value);
+         //         }
+         //     }
+         // });
+
+
+        // --- Initial Load ---
+        console.log("Initializing Braavos App...");
+        handleRecurringTransactions(); // Process recurring items *before* initial render
+        refreshUI(); // Initial render based on loaded/default data
+        showSubmenu('dashboard'); // Show dashboard first
+
+        // Set interval to check for recurring transactions periodically (e.g., every 5 minutes)
+        setInterval(handleRecurringTransactions, 5 * 60 * 1000); // 300,000 ms
+
+        console.log("Braavos App Initialized.");
+
+    }); // End DOMContentLoaded
+</script>
+
+</body>
 </html>
